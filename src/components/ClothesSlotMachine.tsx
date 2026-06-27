@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ClothesStrip from "./ClothesStrip";
 import SaveMatchButton from "./SaveMatchButton";
+import { toggleItemStatus, deleteClothingItem } from "@/app/actions";
 import type { ClothingItem } from "@/lib/types";
 
 type Props = {
@@ -12,10 +14,21 @@ type Props = {
 };
 
 export default function ClothesSlotMachine({ tops, bottoms }: Props) {
+  const router = useRouter();
   const [selectedTopId, setSelectedTopId] = useState<string | null>(null);
   const [selectedBottomId, setSelectedBottomId] = useState<string | null>(null);
 
   const hasItems = tops.length > 0 || bottoms.length > 0;
+
+  const handleToggleStatus = async (id: string) => {
+    await toggleItemStatus(id);
+    router.refresh();
+  };
+
+  const handleDelete = async (id: string, imageUrl: string) => {
+    await deleteClothingItem(id, imageUrl);
+    router.refresh();
+  };
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-lg mx-auto">
@@ -75,6 +88,8 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
             category="top"
             selectedId={selectedTopId}
             onSelect={setSelectedTopId}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDelete}
           />
 
           {/* Connector */}
@@ -95,6 +110,8 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
             category="bottom"
             selectedId={selectedBottomId}
             onSelect={setSelectedBottomId}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDelete}
           />
 
           {/* Save button */}

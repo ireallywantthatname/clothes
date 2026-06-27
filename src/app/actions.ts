@@ -119,3 +119,58 @@ export async function deleteMatch(matchId: string) {
   revalidatePath("/");
   return { success: true };
 }
+
+export async function toggleItemStatus(itemId: string) {
+  if (!itemId) return { error: "No item specified." };
+
+  const supabase = await createClient();
+
+  // Fetch current status
+  const { data, error: fetchError } = await supabase
+    .from("clothes")
+    .select("status")
+    .eq("id", itemId)
+    .single();
+
+  if (fetchError || !data) {
+    return { error: "Item not found." };
+  }
+
+  const newStatus = data.status === "available" ? "unavailable" : "available";
+
+  const { error } = await supabase
+    .from("clothes")
+    .update({ status: newStatus })
+    .eq("id", itemId);
+
+  if (error) {
+    return { error: `Failed to update: ${error.message}` };
+  }
+
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function deleteClothingItem(itemId: string, imageUrl: string) {
+  if (!itemId) return { error: "No item specified." };
+
+  const supabase = await createClient();
+
+  // Extract filename from public URL
+  const urlParts = imageUrl.split("/");
+  const filename = urlParts[urlParts.length - 1];
+
+  if (filename) {
+    await supabase.storage.from("clothes-images").remove([filename]);
+  }
+
+  // Delete from clothes (matches cascade via ON DELETE CASCADE)
+  const { error } = await supabase.from("clothes").delete().eq("id", itemId);
+
+  if (error) {
+    return { error: `Failed to delete: ${error.message}` };
+  }
+
+  revalidatePath("/");
+  return { success: true };
+}

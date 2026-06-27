@@ -2,6 +2,7 @@ export type ClothingItem = {
   id: string;
   image_url: string;
   category: "top" | "bottom";
+  status: "available" | "unavailable";
   created_at: string;
 };
 

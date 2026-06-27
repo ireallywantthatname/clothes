@@ -8,6 +8,8 @@ type Props = {
   category: "top" | "bottom";
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  onToggleStatus: (id: string) => void;
+  onDelete: (id: string, imageUrl: string) => void;
 };
 
 export default function ClothesStrip({
@@ -15,6 +17,8 @@ export default function ClothesStrip({
   category,
   selectedId,
   onSelect,
+  onToggleStatus,
+  onDelete,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -38,7 +42,8 @@ export default function ClothesStrip({
         for (const entry of entries) {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
             const id = entry.target.getAttribute("data-clothes-id");
-            if (id) onSelectRef.current(id);
+            const status = entry.target.getAttribute("data-clothes-status");
+            if (id && status === "available") onSelectRef.current(id);
           }
         }
       },
@@ -50,7 +55,7 @@ export default function ClothesStrip({
 
     cardRefs.current.forEach((el) => observer.observe(el));
 
-    if (items.length === 1) {
+    if (items.length === 1 && items[0].status === "available") {
       onSelectRef.current(items[0].id);
     }
 
@@ -132,22 +137,81 @@ export default function ClothesStrip({
               key={item.id}
               ref={setCardRef(item.id)}
               data-clothes-id={item.id}
+              data-clothes-status={item.status}
               className="scroll-card flex items-center justify-center p-4"
             >
               <div
                 className={`relative overflow-hidden transition-[border-color] duration-300 border-2 ${
-                  selectedId === item.id
-                    ? "border-mono-900"
-                    : "border-transparent"
+                  item.status === "unavailable"
+                    ? "border-mono-200"
+                    : selectedId === item.id
+                      ? "border-mono-900"
+                      : "border-transparent"
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.image_url}
                   alt={`${category} clothing item`}
-                  className="h-64 w-auto max-w-full object-contain"
+                  className={`h-64 w-auto max-w-full object-contain transition-all duration-300 ${
+                    item.status === "unavailable"
+                      ? "opacity-30 grayscale"
+                      : ""
+                  }`}
                   loading="lazy"
                 />
+
+                {/* Unavailable overlay label */}
+                {item.status === "unavailable" && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span
+                      className="text-xs tracking-widest text-mono-500 bg-white/80 px-2 py-1"
+                      style={{ fontFamily: "var(--font-dm-mono)" }}
+                    >
+                      WASH
+                    </span>
+                  </div>
+                )}
+
+                {/* Delete button — top-right */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(item.id, item.image_url);
+                  }}
+                  className="absolute top-0 right-0 w-7 h-7 bg-white border-l border-b border-mono-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
+                  aria-label="Delete item"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-3.5 h-3.5 text-mono-500"
+                  >
+                    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                  </svg>
+                </button>
+
+                {/* Status toggle — bottom-left */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleStatus(item.id);
+                  }}
+                  className={`absolute bottom-0 left-0 h-7 px-2 border-r border-t border-mono-200 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-xs tracking-wider ${
+                    item.status === "available"
+                      ? "bg-white text-mono-500 hover:bg-mono-100"
+                      : "bg-mono-900 text-white hover:bg-mono-950"
+                  }`}
+                  style={{ fontFamily: "var(--font-dm-mono)" }}
+                  aria-label={
+                    item.status === "available"
+                      ? "Mark as unavailable"
+                      : "Mark as available"
+                  }
+                >
+                  {item.status === "available" ? "CLN" : "DRTY"}
+                </button>
               </div>
             </div>
           ))}
