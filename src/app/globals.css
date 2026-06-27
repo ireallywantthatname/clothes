@@ -1,1 +1,32 @@
 @import "tailwindcss";
+
+@theme {
+  --color-blossom-50: #fdf2f8;
+  --color-blossom-100: #fce7f3;
+  --color-blossom-200: #fbcfe8;
+  --color-blossom-300: #f9a8d4;
+  --color-blossom-400: #f472b6;
+  --color-blossom-500: #ec4899;
+  --color-blossom-600: #db2777;
+  --color-blossom-700: #be185d;
+  --color-blossom-800: #9d174d;
+  --color-blossom-900: #831843;
+}
+
+/* Slot-machine scroll strip */
+.scroll-strip {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.scroll-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-card {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+}

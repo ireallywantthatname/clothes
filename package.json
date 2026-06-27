@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bun --bun next dev", 
-    "build": "bun --bun next build", 
+    "dev": "bun --bun next dev",
+    "build": "bun --bun next build",
     "start": "bun --bun next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.2",
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4"
