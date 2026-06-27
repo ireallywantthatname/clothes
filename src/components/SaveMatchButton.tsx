@@ -29,31 +29,32 @@ export default function SaveMatchButton({ topId, bottomId }: Props) {
       setStatus({ type: "error", message: result.error });
       setTimeout(() => setStatus({ type: "idle" }), 2500);
     } else {
-      setStatus({ type: "success", message: "Match saved!" });
+      setStatus({ type: "success", message: "Match saved" });
       router.refresh();
       setTimeout(() => setStatus({ type: "idle" }), 2000);
     }
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-3">
       <button
         onClick={handleSave}
         disabled={disabled}
-        className={`px-6 py-3 rounded-full text-white font-semibold transition-all text-lg ${
+        style={{ fontFamily: "var(--font-dm-mono)" }}
+        className={`px-8 py-3 text-sm tracking-widest transition-colors ${
           disabled
-            ? "bg-blossom-300 cursor-not-allowed"
+            ? "bg-mono-200 text-mono-500 cursor-not-allowed"
             : status.type === "success"
-              ? "bg-green-500"
+              ? "bg-mono-900 text-white"
               : status.type === "error"
-                ? "bg-red-400"
-                : "bg-blossom-500 hover:bg-blossom-600 active:scale-95 shadow-md hover:shadow-lg"
+                ? "bg-white text-mono-900 border-2 border-mono-900"
+                : "bg-mono-900 text-white hover:bg-mono-950"
         }`}
       >
         {status.type === "loading" ? (
           <span className="flex items-center gap-2">
             <svg
-              className="animate-spin h-5 w-5"
+              className="animate-spin h-4 w-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -72,19 +73,19 @@ export default function SaveMatchButton({ topId, bottomId }: Props) {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            Saving...
+            SAVING
           </span>
         ) : status.type === "success" ? (
-          "Saved! ✨"
+          "SAVED"
         ) : status.type === "error" ? (
           status.message
         ) : (
-          "💝 Save This Match"
+          "SAVE MATCH"
         )}
       </button>
       {!topId || !bottomId ? (
-        <p className="text-xs text-blossom-400">
-          Scroll through tops and bottoms to pick a combination
+        <p className="text-xs text-mono-500">
+          Scroll to pick a top and bottom
         </p>
       ) : null}
     </div>

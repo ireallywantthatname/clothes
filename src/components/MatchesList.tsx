@@ -24,13 +24,16 @@ export default function MatchesList({ matches }: Props) {
 
   if (matches.length === 0) {
     return (
-      <div className="w-full mt-8">
-        <h2 className="text-lg font-semibold text-blossom-700 mb-3">
-          Saved Matches
+      <div className="w-full mt-10">
+        <h2
+          className="text-xs tracking-widest text-mono-500 mb-3"
+          style={{ fontFamily: "var(--font-dm-mono)" }}
+        >
+          SAVED MATCHES
         </h2>
-        <div className="flex items-center justify-center h-32 bg-blossom-50 rounded-2xl border-2 border-dashed border-blossom-200">
-          <p className="text-blossom-400 text-sm">
-            No matches saved yet — find a combination you love and save it!
+        <div className="flex items-center justify-center h-32 bg-mono-100 border-2 border-mono-200">
+          <p className="text-mono-500 text-sm">
+            No matches saved yet.
           </p>
         </div>
       </div>
@@ -38,20 +41,28 @@ export default function MatchesList({ matches }: Props) {
   }
 
   return (
-    <div className="w-full mt-8">
-      <h2 className="text-lg font-semibold text-blossom-700 mb-3">
-        Saved Matches ({matches.length})
-      </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    <div className="w-full mt-10">
+      <div className="flex items-center justify-between mb-3">
+        <h2
+          className="text-xs tracking-widest text-mono-500"
+          style={{ fontFamily: "var(--font-dm-mono)" }}
+        >
+          SAVED MATCHES
+        </h2>
+        <span className="text-xs text-mono-500 tabular-nums">
+          {matches.length}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-mono-200">
         {matches.map((match) => (
           <div
             key={match.id}
-            className="relative bg-white rounded-xl shadow-sm border border-blossom-100 overflow-hidden group"
+            className="relative bg-white overflow-hidden group"
           >
             <div className="flex flex-col">
               {/* Top image */}
               {match.top && (
-                <div className="h-32 bg-blossom-50 flex items-center justify-center p-2">
+                <div className="h-32 bg-mono-100 flex items-center justify-center p-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={match.top.image_url}
@@ -61,9 +72,11 @@ export default function MatchesList({ matches }: Props) {
                   />
                 </div>
               )}
+              {/* Divider */}
+              <div className="h-px bg-mono-200" />
               {/* Bottom image */}
               {match.bottom && (
-                <div className="h-32 bg-blossom-50/50 flex items-center justify-center p-2 border-t border-blossom-100">
+                <div className="h-32 bg-white flex items-center justify-center p-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={match.bottom.image_url}
@@ -79,12 +92,12 @@ export default function MatchesList({ matches }: Props) {
             <button
               onClick={() => handleDelete(match.id)}
               disabled={deletingId === match.id}
-              className="absolute top-1 right-1 w-7 h-7 rounded-full bg-white/90 shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+              className="absolute top-0 right-0 w-7 h-7 bg-white border-l border-b border-mono-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
               aria-label="Delete match"
             >
               {deletingId === match.id ? (
                 <svg
-                  className="animate-spin h-3 w-3 text-red-400"
+                  className="animate-spin h-3 w-3 text-mono-500"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -108,13 +121,9 @@ export default function MatchesList({ matches }: Props) {
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className="w-3.5 h-3.5 text-red-400"
+                  className="w-3.5 h-3.5 text-mono-500"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
-                    clipRule="evenodd"
-                  />
+                  <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
                 </svg>
               )}
             </button>

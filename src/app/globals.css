@@ -1,16 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-blossom-50: #fdf2f8;
-  --color-blossom-100: #fce7f3;
-  --color-blossom-200: #fbcfe8;
-  --color-blossom-300: #f9a8d4;
-  --color-blossom-400: #f472b6;
-  --color-blossom-500: #ec4899;
-  --color-blossom-600: #db2777;
-  --color-blossom-700: #be185d;
-  --color-blossom-800: #9d174d;
-  --color-blossom-900: #831843;
+  --color-mono-0: #ffffff;
+  --color-mono-50: #fafafa;
+  --color-mono-100: #f5f5f5;
+  --color-mono-200: #e5e5e5;
+  --color-mono-500: #737373;
+  --color-mono-800: #262626;
+  --color-mono-900: #0a0a0a;
+  --color-mono-950: #050505;
 }
 
 /* Slot-machine scroll strip */

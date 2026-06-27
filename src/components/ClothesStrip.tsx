@@ -21,13 +21,10 @@ export default function ClothesStrip({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const label = category === "top" ? "Tops" : "Bottoms";
+  const label = category === "top" ? "TOPS" : "BOTTOMS";
   const emptyMessage =
-    category === "top"
-      ? "No tops yet"
-      : "No bottoms yet";
+    category === "top" ? "No tops yet" : "No bottoms yet";
 
-  // Use a ref for the callback to avoid re-creating the observer
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
 
@@ -51,10 +48,8 @@ export default function ClothesStrip({
       }
     );
 
-    // Observe all cards
     cardRefs.current.forEach((el) => observer.observe(el));
 
-    // If there's only one item, select it immediately
     if (items.length === 1) {
       onSelectRef.current(items[0].id);
     }
@@ -99,11 +94,14 @@ export default function ClothesStrip({
   if (items.length === 0) {
     return (
       <div className="w-full">
-        <h2 className="text-lg font-semibold text-blossom-700 mb-2">
+        <h2
+          className="text-xs tracking-widest text-mono-500 mb-2"
+          style={{ fontFamily: "var(--font-dm-mono)" }}
+        >
           {label}
         </h2>
-        <div className="flex items-center justify-center h-48 bg-blossom-50 rounded-2xl border-2 border-dashed border-blossom-200">
-          <p className="text-blossom-400 text-sm">{emptyMessage}</p>
+        <div className="flex items-center justify-center h-48 bg-mono-100 border-2 border-mono-200">
+          <p className="text-mono-500 text-sm">{emptyMessage}</p>
         </div>
       </div>
     );
@@ -112,9 +110,14 @@ export default function ClothesStrip({
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-semibold text-blossom-700">{label}</h2>
-        <span className="text-xs text-blossom-400">
-          {items.length} item{items.length !== 1 ? "s" : ""}
+        <h2
+          className="text-xs tracking-widest text-mono-500"
+          style={{ fontFamily: "var(--font-dm-mono)" }}
+        >
+          {label}
+        </h2>
+        <span className="text-xs text-mono-500 tabular-nums">
+          {items.length}
         </span>
       </div>
 
@@ -122,7 +125,7 @@ export default function ClothesStrip({
         {/* Scroll container */}
         <div
           ref={containerRef}
-          className="scroll-strip rounded-2xl bg-blossom-50"
+          className="scroll-strip bg-mono-100 border border-mono-200"
         >
           {items.map((item) => (
             <div
@@ -132,10 +135,10 @@ export default function ClothesStrip({
               className="scroll-card flex items-center justify-center p-4"
             >
               <div
-                className={`relative rounded-xl overflow-hidden transition-shadow duration-300 ${
+                className={`relative overflow-hidden transition-[border-color] duration-300 border-2 ${
                   selectedId === item.id
-                    ? "ring-4 ring-blossom-500 shadow-lg"
-                    : "ring-2 ring-transparent"
+                    ? "border-mono-900"
+                    : "border-transparent"
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -154,14 +157,14 @@ export default function ClothesStrip({
         {canScrollLeft && (
           <button
             onClick={() => scrollBy("left")}
-            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-mono-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
             aria-label="Previous item"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-5 h-5 text-blossom-600"
+              className="w-5 h-5 text-mono-900"
             >
               <path
                 fillRule="evenodd"
@@ -176,14 +179,14 @@ export default function ClothesStrip({
         {canScrollRight && (
           <button
             onClick={() => scrollBy("right")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+            className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-mono-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
             aria-label="Next item"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-5 h-5 text-blossom-600"
+              className="w-5 h-5 text-mono-900"
             >
               <path
                 fillRule="evenodd"
