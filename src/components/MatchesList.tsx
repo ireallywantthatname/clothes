@@ -65,7 +65,7 @@ export default function MatchesList({ matches }: Props) {
                 <div className="h-32 bg-mono-100 flex items-center justify-center p-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={match.top.image_url}
+                    src={`/uploads/${match.top.image_url}`}
                     alt="Top"
                     className="h-full w-auto max-w-full object-contain"
                     loading="lazy"
@@ -79,7 +79,7 @@ export default function MatchesList({ matches }: Props) {
                 <div className="h-32 bg-white flex items-center justify-center p-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={match.bottom.image_url}
+                    src={`/uploads/${match.bottom.image_url}`}
                     alt="Bottom"
                     className="h-full w-auto max-w-full object-contain"
                     loading="lazy"

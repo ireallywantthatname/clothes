@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
 import db from "@/lib/db";
 
-const UPLOADS_DIR = "public/uploads";
+const UPLOADS_DIR = "data/uploads";
 
 // Ensure uploads directory exists
 if (!existsSync(UPLOADS_DIR)) {
@@ -35,7 +35,7 @@ export async function uploadClothing(formData: FormData) {
   const buffer = Buffer.from(await file.arrayBuffer());
   writeFileSync(filepath, buffer);
 
-  const imageUrl = `/uploads/${filename}`;
+  const imageUrl = filename;
 
   // Insert into database
   try {

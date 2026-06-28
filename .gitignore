@@ -38,7 +38,7 @@ yarn-error.log*
 
 # local data
 data/*.db
-public/uploads/*
+data/uploads/*
 !.gitkeep
 
 # typescript

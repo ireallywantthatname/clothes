@@ -151,7 +151,7 @@ export default function ClothesStrip({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={item.image_url}
+                  src={`/uploads/${item.image_url}`}
                   alt={`${category} clothing item`}
                   className={`h-64 w-auto max-w-full object-contain transition-all duration-300 ${
                     item.status === "unavailable"
