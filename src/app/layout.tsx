@@ -14,7 +14,7 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lazy Blossom",
+  title: "clothes",
   description: "Mix and match outfits from your closet",
 };
 

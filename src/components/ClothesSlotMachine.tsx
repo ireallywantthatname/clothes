@@ -38,7 +38,7 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
           className="text-2xl font-medium text-mono-900 tracking-wider"
           style={{ fontFamily: "var(--font-dm-mono)" }}
         >
-          LAZY BLOSSOM
+          CLOTHES
         </h1>
         <Link
           href="/upload"
