@@ -1,7 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
+import db from "@/lib/db";
+
+const UPLOADS_DIR = "public/uploads";
+
+// Ensure uploads directory exists
+if (!existsSync(UPLOADS_DIR)) {
+  mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 export async function uploadClothing(formData: FormData) {
   const file = formData.get("file") as File | null;
@@ -19,36 +27,25 @@ export async function uploadClothing(formData: FormData) {
     return { error: "Please select a category (top or bottom)." };
   }
 
-  const supabase = await createClient();
-
-  // Generate a unique filename
   const ext = file.name.split(".").pop() || "jpg";
   const filename = `${category}-${crypto.randomUUID()}.${ext}`;
+  const filepath = `${UPLOADS_DIR}/${filename}`;
 
-  // Upload to Supabase Storage
-  const { error: uploadError } = await supabase.storage
-    .from("clothes-images")
-    .upload(filename, file, {
-      contentType: file.type,
-      upsert: false,
-    });
+  // Write file to disk
+  const buffer = Buffer.from(await file.arrayBuffer());
+  writeFileSync(filepath, buffer);
 
-  if (uploadError) {
-    return { error: `Upload failed: ${uploadError.message}` };
-  }
+  const imageUrl = `/uploads/${filename}`;
 
-  // Get public URL
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("clothes-images").getPublicUrl(filename);
-
-  // Insert into clothes table
-  const { error: insertError } = await supabase
-    .from("clothes")
-    .insert({ image_url: publicUrl, category });
-
-  if (insertError) {
-    return { error: `Failed to save: ${insertError.message}` };
+  // Insert into database
+  try {
+    db.run("INSERT INTO clothes (id, image_url, category) VALUES (?, ?, ?)", [
+      crypto.randomUUID(),
+      imageUrl,
+      category,
+    ]);
+  } catch (e: unknown) {
+    return { error: `Failed to save: ${(e as Error).message}` };
   }
 
   revalidatePath("/");
@@ -60,15 +57,12 @@ export async function saveMatch(topId: string, bottomId: string) {
     return { error: "Select a top and a bottom first." };
   }
 
-  const supabase = await createClient();
-
   // Verify both items exist and have correct categories
-  const { data: items, error: fetchError } = await supabase
-    .from("clothes")
-    .select("id, category")
-    .in("id", [topId, bottomId]);
+  const items = db
+    .query("SELECT id, category FROM clothes WHERE id IN (?, ?)")
+    .all(topId, bottomId) as { id: string; category: string }[];
 
-  if (fetchError || !items || items.length < 2) {
+  if (items.length < 2) {
     return { error: "One or both items no longer exist." };
   }
 
@@ -83,17 +77,18 @@ export async function saveMatch(topId: string, bottomId: string) {
   }
 
   // Insert match (UNIQUE constraint prevents duplicates)
-  const { error: insertError } = await supabase.from("matches").insert({
-    top_id: topId,
-    bottom_id: bottomId,
-  });
-
-  if (insertError) {
-    // Postgres error code 23505 = unique_violation
-    if (insertError.code === "23505") {
+  try {
+    db.run("INSERT INTO matches (id, top_id, bottom_id) VALUES (?, ?, ?)", [
+      crypto.randomUUID(),
+      topId,
+      bottomId,
+    ]);
+  } catch (e: unknown) {
+    const msg = (e as Error).message;
+    if (msg.includes("UNIQUE")) {
       return { error: "This combination is already saved." };
     }
-    return { error: `Failed to save match: ${insertError.message}` };
+    return { error: `Failed to save match: ${msg}` };
   }
 
   revalidatePath("/");
@@ -105,16 +100,7 @@ export async function deleteMatch(matchId: string) {
     return { error: "No match specified." };
   }
 
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("matches")
-    .delete()
-    .eq("id", matchId);
-
-  if (error) {
-    return { error: `Failed to delete match: ${error.message}` };
-  }
+  db.run("DELETE FROM matches WHERE id = ?", [matchId]);
 
   revalidatePath("/");
   return { success: true };
@@ -123,29 +109,17 @@ export async function deleteMatch(matchId: string) {
 export async function toggleItemStatus(itemId: string) {
   if (!itemId) return { error: "No item specified." };
 
-  const supabase = await createClient();
+  const row = db
+    .query("SELECT status FROM clothes WHERE id = ?")
+    .get(itemId) as { status: string } | null;
 
-  // Fetch current status
-  const { data, error: fetchError } = await supabase
-    .from("clothes")
-    .select("status")
-    .eq("id", itemId)
-    .single();
-
-  if (fetchError || !data) {
+  if (!row) {
     return { error: "Item not found." };
   }
 
-  const newStatus = data.status === "available" ? "unavailable" : "available";
+  const newStatus = row.status === "available" ? "unavailable" : "available";
 
-  const { error } = await supabase
-    .from("clothes")
-    .update({ status: newStatus })
-    .eq("id", itemId);
-
-  if (error) {
-    return { error: `Failed to update: ${error.message}` };
-  }
+  db.run("UPDATE clothes SET status = ? WHERE id = ?", [newStatus, itemId]);
 
   revalidatePath("/");
   return { success: true };
@@ -154,22 +128,19 @@ export async function toggleItemStatus(itemId: string) {
 export async function deleteClothingItem(itemId: string, imageUrl: string) {
   if (!itemId) return { error: "No item specified." };
 
-  const supabase = await createClient();
-
-  // Extract filename from public URL
-  const urlParts = imageUrl.split("/");
-  const filename = urlParts[urlParts.length - 1];
-
+  // Delete image file from disk
+  const filename = imageUrl.split("/").pop();
   if (filename) {
-    await supabase.storage.from("clothes-images").remove([filename]);
+    const filepath = `${UPLOADS_DIR}/${filename}`;
+    try {
+      unlinkSync(filepath);
+    } catch {
+      // File may not exist — ignore
+    }
   }
 
-  // Delete from clothes (matches cascade via ON DELETE CASCADE)
-  const { error } = await supabase.from("clothes").delete().eq("id", itemId);
-
-  if (error) {
-    return { error: `Failed to delete: ${error.message}` };
-  }
+  // Delete from clothes (matches cascade via ON DELETE CASCADE FK)
+  db.run("DELETE FROM clothes WHERE id = ?", [itemId]);
 
   revalidatePath("/");
   return { success: true };

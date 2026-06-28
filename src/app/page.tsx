@@ -1,32 +1,24 @@
-import { createClient } from "@/lib/supabase/server";
+import db from "@/lib/db";
 import ClothesSlotMachine from "@/components/ClothesSlotMachine";
 import MatchesList from "@/components/MatchesList";
 import type { ClothingItem, Match } from "@/lib/types";
 
-export default async function HomePage() {
-  const supabase = await createClient();
+export default function HomePage() {
+  const clothes = db
+    .query("SELECT * FROM clothes ORDER BY created_at DESC")
+    .all() as ClothingItem[];
 
-  // Fetch all clothes
-  const { data: clothes } = await supabase
-    .from("clothes")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const rawMatches = db
+    .query("SELECT * FROM matches ORDER BY created_at DESC")
+    .all() as Match[];
 
-  // Fetch matches
-  const { data: rawMatches } = await supabase
-    .from("matches")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  const clothingItems = (clothes ?? []) as ClothingItem[];
-
-  const tops = clothingItems.filter((item) => item.category === "top");
-  const bottoms = clothingItems.filter((item) => item.category === "bottom");
+  const tops = clothes.filter((item) => item.category === "top");
+  const bottoms = clothes.filter((item) => item.category === "bottom");
 
   // Hydrate matches with their clothing items
-  const matches: Match[] = (rawMatches ?? []).map((match) => {
-    const top = clothingItems.find((c) => c.id === match.top_id);
-    const bottom = clothingItems.find((c) => c.id === match.bottom_id);
+  const matches: Match[] = rawMatches.map((match) => {
+    const top = clothes.find((c) => c.id === match.top_id);
+    const bottom = clothes.find((c) => c.id === match.bottom_id);
     return {
       id: match.id,
       top_id: match.top_id,
