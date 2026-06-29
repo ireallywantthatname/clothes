@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { uploadClothing } from "@/app/actions";
+import { removeBackground } from "@/lib/removeBackground";
 
 async function resizeImage(file: File, maxDimension: number): Promise<File> {
   return new Promise((resolve, reject) => {
@@ -69,10 +70,11 @@ export default function UploadForm() {
   const [category, setCategory] = useState<"top" | "bottom" | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [status, setStatus] = useState<{
-    type: "idle" | "uploading" | "error" | "success";
+    type: "idle" | "uploading" | "processing" | "error" | "success";
     message?: string;
   }>({ type: "idle" });
   const [dragOver, setDragOver] = useState(false);
+  const [removeBg, setRemoveBg] = useState(false);
 
   // Cleanup preview URL on unmount or file change
   useEffect(() => {
@@ -128,6 +130,28 @@ export default function UploadForm() {
       formData.append("file", file);
       formData.append("category", category);
 
+      // Remove background if toggled on
+      if (removeBg) {
+        setStatus({ type: "processing" });
+        try {
+          const bgBlob = await removeBackground(file);
+          const pngFile = new File(
+            [bgBlob],
+            file.name.replace(/\.[^.]+$/, "") + ".png",
+            { type: "image/png" },
+          );
+          formData.set("file", pngFile);
+        } catch {
+          setStatus({
+            type: "error",
+            message: "Background removal failed. Try again or turn it off.",
+          });
+          isSubmitting.current = false;
+          return;
+        }
+        setStatus({ type: "uploading" });
+      }
+
       const result = await uploadClothing(formData);
 
       if (result.error) {
@@ -162,7 +186,7 @@ export default function UploadForm() {
     if (droppedFile) handleFileChange(droppedFile);
   };
 
-  const canSubmit = file && category && status.type !== "uploading";
+  const canSubmit = file && category && status.type !== "uploading" && status.type !== "processing";
 
   return (
     <form
@@ -288,6 +312,46 @@ export default function UploadForm() {
         </div>
       </div>
 
+      {/* BG Removal toggle */}
+      {preview && (
+        <div className="w-full">
+          <p
+            className="text-xs tracking-widest text-mono-500 mb-2"
+            style={{ fontFamily: "var(--font-dm-mono)" }}
+          >
+            BG REMOVAL
+          </p>
+          <div className="flex gap-px bg-mono-200">
+            <button
+              type="button"
+              onClick={() => setRemoveBg(true)}
+              disabled={status.type === "processing"}
+              className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
+                removeBg
+                  ? "bg-mono-900 text-white"
+                  : "bg-white text-mono-500 hover:bg-mono-100"
+              }`}
+              style={{ fontFamily: "var(--font-dm-mono)" }}
+            >
+              ON
+            </button>
+            <button
+              type="button"
+              onClick={() => setRemoveBg(false)}
+              disabled={status.type === "processing"}
+              className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
+                !removeBg
+                  ? "bg-mono-900 text-white"
+                  : "bg-white text-mono-500 hover:bg-mono-100"
+              }`}
+              style={{ fontFamily: "var(--font-dm-mono)" }}
+            >
+              OFF
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Status messages */}
       {status.type === "error" && status.message && (
         <div className="w-full border-2 border-mono-900 bg-white px-4 py-2 text-center">
@@ -306,7 +370,31 @@ export default function UploadForm() {
             : "bg-mono-200 text-mono-500 cursor-not-allowed"
         }`}
       >
-        {status.type === "uploading" ? (
+        {status.type === "processing" ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg
+              className="animate-spin h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            REMOVING BG
+          </span>
+        ) : status.type === "uploading" ? (
           <span className="flex items-center justify-center gap-2">
             <svg
               className="animate-spin h-4 w-4"
