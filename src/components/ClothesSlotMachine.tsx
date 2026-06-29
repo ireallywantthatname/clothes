@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ClothesStrip from "./ClothesStrip";
 import SaveMatchButton from "./SaveMatchButton";
+import ConfirmDialog from "./ConfirmDialog";
 import { toggleItemStatus, deleteClothingItem } from "@/app/actions";
 import type { ClothingItem } from "@/lib/types";
 
@@ -17,6 +18,10 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
   const router = useRouter();
   const [selectedTopId, setSelectedTopId] = useState<string | null>(null);
   const [selectedBottomId, setSelectedBottomId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    imageUrl: string;
+  } | null>(null);
 
   const hasItems = tops.length > 0 || bottoms.length > 0;
 
@@ -25,9 +30,8 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
     router.refresh();
   };
 
-  const handleDelete = async (id: string, imageUrl: string) => {
-    await deleteClothingItem(id, imageUrl);
-    router.refresh();
+  const handleDelete = (id: string, imageUrl: string) => {
+    setPendingDelete({ id, imageUrl });
   };
 
   return (
@@ -121,6 +125,20 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
           />
         </>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="REMOVE ITEM?"
+        message="This cannot be undone. The photo and all its saved matches will be permanently deleted."
+        confirmLabel="DELETE"
+        onConfirm={async () => {
+          if (!pendingDelete) return;
+          await deleteClothingItem(pendingDelete.id, pendingDelete.imageUrl);
+          router.refresh();
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }
