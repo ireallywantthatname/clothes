@@ -1,6 +1,5 @@
 import db from "@/lib/db";
-import ClothesSlotMachine from "@/components/ClothesSlotMachine";
-import MatchesList from "@/components/MatchesList";
+import HomeContent from "@/components/HomeContent";
 import type { ClothingItem, Match } from "@/lib/types";
 
 export default function HomePage() {
@@ -31,10 +30,7 @@ export default function HomePage() {
 
   return (
     <main className="flex-1 flex flex-col items-center p-4 pb-8">
-      <ClothesSlotMachine tops={tops} bottoms={bottoms} />
-      <div className="w-full max-w-lg mx-auto">
-        <MatchesList matches={matches} />
-      </div>
+      <HomeContent tops={tops} bottoms={bottoms} matches={matches} />
     </main>
   );
 }
