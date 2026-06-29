@@ -28,3 +28,10 @@
   flex: 0 0 100%;
   scroll-snap-align: center;
 }
+
+/* Always show action buttons on touch devices (no hover available) */
+@media (pointer: coarse) {
+  .touch-visible {
+    opacity: 1 !important;
+  }
+}

@@ -82,7 +82,7 @@ export default function MatchesList({ matches }: Props) {
             {/* Delete button */}
             <button
               onClick={() => setPendingDelete(match.id)}
-              className="absolute top-0 right-0 w-7 h-7 bg-white border-l border-b border-mono-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
+              className="absolute top-0 right-0 w-7 h-7 bg-white border-l border-b border-mono-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100 touch-visible"
               aria-label="Delete match"
             >
               <svg

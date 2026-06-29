@@ -179,7 +179,7 @@ export default function ClothesStrip({
                     e.stopPropagation();
                     onDelete(item.id, item.image_url);
                   }}
-                  className="absolute top-0 right-0 w-7 h-7 bg-white border-l border-b border-mono-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
+                  className="absolute top-0 right-0 w-7 h-7 bg-white border-l border-b border-mono-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100 touch-visible"
                   aria-label="Delete item"
                 >
                   <svg
@@ -198,7 +198,7 @@ export default function ClothesStrip({
                     e.stopPropagation();
                     onToggleStatus(item.id);
                   }}
-                  className={`absolute bottom-0 left-0 h-7 px-2 border-r border-t border-mono-200 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-xs tracking-wider ${
+                  className={`absolute bottom-0 left-0 h-7 px-2 border-r border-t border-mono-200 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-xs tracking-wider touch-visible ${
                     item.status === "available"
                       ? "bg-white text-mono-500 hover:bg-mono-100"
                       : "bg-mono-900 text-white hover:bg-mono-950"
