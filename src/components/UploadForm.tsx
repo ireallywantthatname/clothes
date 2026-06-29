@@ -4,9 +4,67 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { uploadClothing } from "@/app/actions";
 
+async function resizeImage(file: File, maxDimension: number): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      // Already small enough — return original unchanged
+      if (img.naturalWidth <= maxDimension && img.naturalHeight <= maxDimension) {
+        resolve(file);
+        return;
+      }
+
+      // Calculate new dimensions preserving aspect ratio
+      let { naturalWidth: w, naturalHeight: h } = img;
+      if (w > h) {
+        h = Math.round((h * maxDimension) / w);
+        w = maxDimension;
+      } else {
+        w = Math.round((w * maxDimension) / h);
+        h = maxDimension;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Could not get canvas context"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Canvas toBlob returned null"));
+            return;
+          }
+          const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+          resolve(new File([blob], name, { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        0.8,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load image"));
+    };
+
+    img.src = url;
+  });
+}
+
 export default function UploadForm() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isSubmitting = useRef(false);
   const [file, setFile] = useState<File | null>(null);
   const [category, setCategory] = useState<"top" | "bottom" | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -24,13 +82,21 @@ export default function UploadForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFileChange = (selectedFile: File | null) => {
+  const handleFileChange = async (selectedFile: File | null) => {
     if (preview) URL.revokeObjectURL(preview);
 
     if (selectedFile && selectedFile.type.startsWith("image/")) {
-      setFile(selectedFile);
-      setPreview(URL.createObjectURL(selectedFile));
-      setStatus({ type: "idle" });
+      try {
+        const resized = await resizeImage(selectedFile, 1200);
+        setFile(resized);
+        setPreview(URL.createObjectURL(resized));
+        setStatus({ type: "idle" });
+      } catch {
+        // Fall back to original file if resize fails
+        setFile(selectedFile);
+        setPreview(URL.createObjectURL(selectedFile));
+        setStatus({ type: "idle" });
+      }
     } else if (selectedFile) {
       setFile(null);
       setPreview(null);
@@ -44,6 +110,8 @@ export default function UploadForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isSubmitting.current) return;
+
     if (!file || !category) {
       setStatus({
         type: "error",
@@ -52,22 +120,27 @@ export default function UploadForm() {
       return;
     }
 
+    isSubmitting.current = true;
     setStatus({ type: "uploading" });
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("category", category);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("category", category);
 
-    const result = await uploadClothing(formData);
+      const result = await uploadClothing(formData);
 
-    if (result.error) {
-      setStatus({ type: "error", message: result.error });
-    } else {
-      setStatus({ type: "success", message: "Uploaded!" });
-      router.refresh();
-      setTimeout(() => {
-        router.push("/");
-      }, 800);
+      if (result.error) {
+        setStatus({ type: "error", message: result.error });
+      } else {
+        setStatus({ type: "success", message: "Uploaded!" });
+        router.refresh();
+        setTimeout(() => {
+          router.push("/");
+        }, 800);
+      }
+    } finally {
+      isSubmitting.current = false;
     }
   };
 
