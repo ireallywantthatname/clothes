@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { uploadClothing } from "@/app/actions";
-import { removeBackground } from "@/lib/removeBackground";
+import { removeBackground, preloadBackgroundRemoval } from "@/lib/removeBackground";
+import type { ProgressCallback } from "@/lib/removeBackground";
 
-async function resizeImage(file: File, maxDimension: number): Promise<File> {
+async function resizeImage(
+  file: File,
+  maxDimension: number,
+  format: "image/jpeg" | "image/png" = "image/jpeg",
+  quality?: number,
+): Promise<File> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -45,11 +51,12 @@ async function resizeImage(file: File, maxDimension: number): Promise<File> {
             reject(new Error("Canvas toBlob returned null"));
             return;
           }
-          const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
-          resolve(new File([blob], name, { type: "image/jpeg" }));
+          const ext = format === "image/png" ? "png" : "jpg";
+          const name = file.name.replace(/\.[^.]+$/, "") + "." + ext;
+          resolve(new File([blob], name, { type: format }));
         },
-        "image/jpeg",
-        0.8,
+        format,
+        quality,
       );
     };
 
@@ -75,6 +82,15 @@ export default function UploadForm() {
   }>({ type: "idle" });
   const [dragOver, setDragOver] = useState(false);
   const [removeBg, setRemoveBg] = useState(false);
+  const [preloadState, setPreloadState] = useState<{
+    phase: "idle" | "loading" | "ready";
+    progress: number;
+    label: string;
+  }>({ phase: "idle", progress: 0, label: "" });
+  const [processingProgress, setProcessingProgress] = useState<{
+    percent: number;
+    label: string;
+  }>({ percent: 0, label: "" });
 
   // Cleanup preview URL on unmount or file change
   useEffect(() => {
@@ -84,12 +100,35 @@ export default function UploadForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handlePreloadProgress: ProgressCallback = useCallback(
+    (key, current, total) => {
+      const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+      setPreloadState({
+        phase: "loading",
+        progress: percent,
+        label: key,
+      });
+    },
+    [],
+  );
+
+  const handleToggleBgOn = useCallback(() => {
+    setRemoveBg(true);
+    setPreloadState({ phase: "loading", progress: 0, label: "" });
+    preloadBackgroundRemoval(handlePreloadProgress);
+  }, [handlePreloadProgress]);
+
+  const handleToggleBgOff = useCallback(() => {
+    setRemoveBg(false);
+    setPreloadState({ phase: "idle", progress: 0, label: "" });
+  }, []);
+
   const handleFileChange = async (selectedFile: File | null) => {
     if (preview) URL.revokeObjectURL(preview);
 
     if (selectedFile && selectedFile.type.startsWith("image/")) {
       try {
-        const resized = await resizeImage(selectedFile, 1200);
+        const resized = await resizeImage(selectedFile, 1024);
         setFile(resized);
         setPreview(URL.createObjectURL(resized));
         setStatus({ type: "idle" });
@@ -134,7 +173,16 @@ export default function UploadForm() {
       if (removeBg) {
         setStatus({ type: "processing" });
         try {
-          const bgBlob = await removeBackground(file);
+          // Re-resize for BG removal: smaller dimension + lossless PNG input
+          const bgInput = await resizeImage(file, 800, "image/png");
+          const bgBlob = await removeBackground(
+            bgInput,
+            (key, current, total) => {
+              const percent =
+                total > 0 ? Math.round((current / total) * 100) : 0;
+              setProcessingProgress({ percent, label: key });
+            },
+          );
           const pngFile = new File(
             [bgBlob],
             file.name.replace(/\.[^.]+$/, "") + ".png",
@@ -186,7 +234,11 @@ export default function UploadForm() {
     if (droppedFile) handleFileChange(droppedFile);
   };
 
-  const canSubmit = file && category && status.type !== "uploading" && status.type !== "processing";
+  const canSubmit =
+    file &&
+    category &&
+    status.type !== "uploading" &&
+    status.type !== "processing";
 
   return (
     <form
@@ -228,8 +280,7 @@ export default function UploadForm() {
               onClick={(e) => {
                 e.stopPropagation();
                 handleFileChange(null);
-                if (fileInputRef.current)
-                  fileInputRef.current.value = "";
+                if (fileInputRef.current) fileInputRef.current.value = "";
               }}
               className="absolute top-2 right-2 w-8 h-8 bg-white border border-mono-300 flex items-center justify-center hover:bg-mono-100 transition-colors"
               aria-label="Remove image"
@@ -324,7 +375,7 @@ export default function UploadForm() {
           <div className="flex gap-px bg-mono-200">
             <button
               type="button"
-              onClick={() => setRemoveBg(true)}
+              onClick={handleToggleBgOn}
               disabled={status.type === "processing"}
               className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
                 removeBg
@@ -337,7 +388,7 @@ export default function UploadForm() {
             </button>
             <button
               type="button"
-              onClick={() => setRemoveBg(false)}
+              onClick={handleToggleBgOff}
               disabled={status.type === "processing"}
               className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
                 !removeBg
@@ -349,6 +400,24 @@ export default function UploadForm() {
               OFF
             </button>
           </div>
+          {/* Model preload progress */}
+          {preloadState.phase === "loading" && (
+            <div className="mt-2 w-full">
+              <div className="flex justify-between text-xs text-mono-500 mb-1">
+                <span>LOADING MODEL</span>
+                <span>{preloadState.progress}%</span>
+              </div>
+              <div className="w-full h-1 bg-mono-200">
+                <div
+                  className="h-full bg-mono-900 transition-all duration-300"
+                  style={{ width: `${preloadState.progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+          {preloadState.phase === "loading" && preloadState.progress === 100 && (
+            <p className="text-xs text-mono-500 mt-1">Model ready</p>
+          )}
         </div>
       )}
 
@@ -356,6 +425,22 @@ export default function UploadForm() {
       {status.type === "error" && status.message && (
         <div className="w-full border-2 border-mono-900 bg-white px-4 py-2 text-center">
           <p className="text-sm text-mono-900">{status.message}</p>
+        </div>
+      )}
+
+      {/* Processing progress bar */}
+      {status.type === "processing" && (
+        <div className="w-full">
+          <div className="flex justify-between text-xs text-mono-500 mb-1">
+            <span>PROCESSING</span>
+            <span>{processingProgress.percent}%</span>
+          </div>
+          <div className="w-full h-1 bg-mono-200">
+            <div
+              className="h-full bg-mono-900 transition-all duration-300"
+              style={{ width: `${processingProgress.percent}%` }}
+            />
+          </div>
         </div>
       )}
 

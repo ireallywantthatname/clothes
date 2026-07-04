@@ -2,14 +2,18 @@ import db from "@/lib/db";
 import HomeContent from "@/components/HomeContent";
 import type { ClothingItem, Match } from "@/lib/types";
 
-export default function HomePage() {
-  const clothes = db
-    .query("SELECT * FROM clothes ORDER BY created_at DESC")
-    .all() as ClothingItem[];
+export const dynamic = "force-dynamic";
 
-  const rawMatches = db
-    .query("SELECT * FROM matches ORDER BY created_at DESC")
-    .all() as Match[];
+export default async function HomePage() {
+  const clothesResult = await db.execute(
+    "SELECT * FROM clothes ORDER BY created_at DESC",
+  );
+  const clothes = clothesResult.rows as unknown as ClothingItem[];
+
+  const rawMatchesResult = await db.execute(
+    "SELECT * FROM matches ORDER BY created_at DESC",
+  );
+  const rawMatches = rawMatchesResult.rows as unknown as Match[];
 
   const tops = clothes.filter((item) => item.category === "top");
   const bottoms = clothes.filter((item) => item.category === "bottom");

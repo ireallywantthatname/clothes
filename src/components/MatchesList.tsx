@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ConfirmDialog from "./ConfirmDialog";
 import { deleteMatch } from "@/app/actions";
 import type { Match } from "@/lib/types";
+import { resolveImageUrl } from "@/lib/imageUrl";
 
 type Props = {
   matches: Match[];
@@ -87,7 +88,7 @@ export default function MatchesList({ matches }: Props) {
                 <div className="h-56 flex items-center justify-center p-4 bg-mono-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/uploads/${match.top.image_url}`}
+                    src={resolveImageUrl(match.top.image_url)}
                     alt="Top"
                     className="max-h-full w-auto max-w-full object-contain"
                     loading="lazy"
@@ -101,7 +102,7 @@ export default function MatchesList({ matches }: Props) {
                 <div className="h-56 flex items-center justify-center p-4 bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/uploads/${match.bottom.image_url}`}
+                    src={resolveImageUrl(match.bottom.image_url)}
                     alt="Bottom"
                     className="max-h-full w-auto max-w-full object-contain"
                     loading="lazy"

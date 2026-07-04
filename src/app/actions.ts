@@ -2,13 +2,44 @@
 
 import { revalidatePath } from "next/cache";
 import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
+import { put, del } from "@vercel/blob";
 import db from "@/lib/db";
 
 const UPLOADS_DIR = "data/uploads";
+const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
 
-// Ensure uploads directory exists
-if (!existsSync(UPLOADS_DIR)) {
-  mkdirSync(UPLOADS_DIR, { recursive: true });
+async function storeFile(
+  filename: string,
+  buffer: Buffer,
+  contentType: string,
+): Promise<string> {
+  if (USE_BLOB) {
+    const blob = await put(`uploads/${filename}`, buffer, {
+      access: "public",
+      contentType,
+    });
+    return blob.url;
+  }
+  // Local filesystem fallback
+  if (!existsSync(UPLOADS_DIR)) {
+    mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+  writeFileSync(`${UPLOADS_DIR}/${filename}`, buffer);
+  return filename;
+}
+
+async function deleteFile(imageUrl: string): Promise<void> {
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    await del(imageUrl);
+    return;
+  }
+  // Local filesystem fallback
+  const filepath = `${UPLOADS_DIR}/${imageUrl}`;
+  try {
+    unlinkSync(filepath);
+  } catch {
+    // File may not exist — ignore
+  }
 }
 
 export async function uploadClothing(formData: FormData) {
@@ -29,22 +60,25 @@ export async function uploadClothing(formData: FormData) {
 
   const ext = file.name.split(".").pop() || "jpg";
   const filename = `${category}-${crypto.randomUUID()}.${ext}`;
-  const filepath = `${UPLOADS_DIR}/${filename}`;
 
-  // Write file to disk
+  // Store file (blob or local)
   const buffer = Buffer.from(await file.arrayBuffer());
-  writeFileSync(filepath, buffer);
-
-  const imageUrl = filename;
+  let imageUrl: string;
+  try {
+    imageUrl = await storeFile(filename, buffer, file.type);
+  } catch (e: unknown) {
+    return { error: `Failed to upload file: ${(e as Error).message}` };
+  }
 
   // Insert into database
   try {
-    db.run("INSERT INTO clothes (id, image_url, category) VALUES (?, ?, ?)", [
-      crypto.randomUUID(),
-      imageUrl,
-      category,
-    ]);
+    await db.execute({
+      sql: "INSERT INTO clothes (id, image_url, category) VALUES (?, ?, ?)",
+      args: [crypto.randomUUID(), imageUrl, category],
+    });
   } catch (e: unknown) {
+    // Clean up the uploaded file on DB failure
+    await deleteFile(imageUrl);
     return { error: `Failed to save: ${(e as Error).message}` };
   }
 
@@ -58,9 +92,11 @@ export async function saveMatch(topId: string, bottomId: string) {
   }
 
   // Verify both items exist and have correct categories
-  const items = db
-    .query("SELECT id, category FROM clothes WHERE id IN (?, ?)")
-    .all(topId, bottomId) as { id: string; category: string }[];
+  const result = await db.execute({
+    sql: "SELECT id, category FROM clothes WHERE id IN (?, ?)",
+    args: [topId, bottomId],
+  });
+  const items = result.rows as unknown as { id: string; category: string }[];
 
   if (items.length < 2) {
     return { error: "One or both items no longer exist." };
@@ -78,11 +114,10 @@ export async function saveMatch(topId: string, bottomId: string) {
 
   // Insert match (UNIQUE constraint prevents duplicates)
   try {
-    db.run("INSERT INTO matches (id, top_id, bottom_id) VALUES (?, ?, ?)", [
-      crypto.randomUUID(),
-      topId,
-      bottomId,
-    ]);
+    await db.execute({
+      sql: "INSERT INTO matches (id, top_id, bottom_id) VALUES (?, ?, ?)",
+      args: [crypto.randomUUID(), topId, bottomId],
+    });
   } catch (e: unknown) {
     const msg = (e as Error).message;
     if (msg.includes("UNIQUE")) {
@@ -100,7 +135,10 @@ export async function deleteMatch(matchId: string) {
     return { error: "No match specified." };
   }
 
-  db.run("DELETE FROM matches WHERE id = ?", [matchId]);
+  await db.execute({
+    sql: "DELETE FROM matches WHERE id = ?",
+    args: [matchId],
+  });
 
   revalidatePath("/");
   return { success: true };
@@ -109,9 +147,12 @@ export async function deleteMatch(matchId: string) {
 export async function toggleItemStatus(itemId: string) {
   if (!itemId) return { error: "No item specified." };
 
-  const row = db
-    .query("SELECT status FROM clothes WHERE id = ?")
-    .get(itemId) as { status: string } | null;
+  const result = await db.execute({
+    sql: "SELECT status FROM clothes WHERE id = ?",
+    args: [itemId],
+  });
+  const rows = result.rows as unknown as { status: string }[];
+  const row = rows[0] ?? null;
 
   if (!row) {
     return { error: "Item not found." };
@@ -119,7 +160,10 @@ export async function toggleItemStatus(itemId: string) {
 
   const newStatus = row.status === "available" ? "unavailable" : "available";
 
-  db.run("UPDATE clothes SET status = ? WHERE id = ?", [newStatus, itemId]);
+  await db.execute({
+    sql: "UPDATE clothes SET status = ? WHERE id = ?",
+    args: [newStatus, itemId],
+  });
 
   revalidatePath("/");
   return { success: true };
@@ -128,19 +172,14 @@ export async function toggleItemStatus(itemId: string) {
 export async function deleteClothingItem(itemId: string, imageUrl: string) {
   if (!itemId) return { error: "No item specified." };
 
-  // Delete image file from disk
-  const filename = imageUrl.split("/").pop();
-  if (filename) {
-    const filepath = `${UPLOADS_DIR}/${filename}`;
-    try {
-      unlinkSync(filepath);
-    } catch {
-      // File may not exist — ignore
-    }
-  }
+  // Delete image file from storage
+  await deleteFile(imageUrl);
 
   // Delete from clothes (matches cascade via ON DELETE CASCADE FK)
-  db.run("DELETE FROM clothes WHERE id = ?", [itemId]);
+  await db.execute({
+    sql: "DELETE FROM clothes WHERE id = ?",
+    args: [itemId],
+  });
 
   revalidatePath("/");
   return { success: true };
