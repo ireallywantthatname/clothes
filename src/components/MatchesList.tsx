@@ -91,7 +91,7 @@ export default function MatchesList({ matches }: Props) {
                   />
                   <NicknameTag
                     nickname={match.top.nickname}
-                    className="mt-1 shrink-0 border-mono-200/80"
+                    className="mt-1 shrink-0"
                   />
                 </div>
               )}
@@ -111,7 +111,7 @@ export default function MatchesList({ matches }: Props) {
                   />
                   <NicknameTag
                     nickname={match.bottom.nickname}
-                    className="mt-1 shrink-0 border-mono-200/80"
+                    className="mt-1 shrink-0"
                   />
                 </div>
               )}

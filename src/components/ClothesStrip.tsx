@@ -347,7 +347,7 @@ export default function ClothesStrip({
               className="scroll-card flex items-center justify-center p-5"
             >
               <div
-                className={`relative flex flex-col items-center overflow-hidden transition-[box-shadow,outline-color] duration-300 outline outline-2 outline-offset-[-1px] bg-mono-0/40 ${
+                className={`relative flex flex-col items-center overflow-hidden transition-[box-shadow,outline-color] duration-300 outline outline-2 outline-offset-[-1px] ${
                   item.status === "unavailable"
                     ? "outline-mono-200"
                     : selectedId === item.id
@@ -382,9 +382,7 @@ export default function ClothesStrip({
 
                   {item.status === "unavailable" && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="font-mono text-xs tracking-widest text-mono-700 bg-mono-0/90 px-2.5 py-1 border border-mono-200">
-                        WASH
-                      </span>
+                      <span className="stage-badge">WASH</span>
                     </div>
                   )}
 

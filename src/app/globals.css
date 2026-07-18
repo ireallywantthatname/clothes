@@ -26,6 +26,17 @@
   --grain-opacity: 0.035;
   /* Scrim stays charcoal in both modes (modal dim, not inverted ink) */
   --color-scrim: color-mix(in srgb, #0c0b0a 48%, transparent);
+  /*
+    Product stage = lit pedestal. Stays paper-light even in dark mode so
+    navy, black, and charcoal garments keep silhouette and detail.
+    Stage ink stays dark with the stage (hang-tags live on the pedestal).
+  */
+  --color-stage: #f5f3f0;
+  --color-stage-check: #ebe8e4;
+  --color-stage-ink: #3d3a36;
+  --color-stage-ink-muted: #6b6560;
+  --color-stage-ink-faint: #b8b2a9;
+  --color-stage-ink-strong: #141210;
   color-scheme: light;
 }
 
@@ -33,6 +44,13 @@ html[data-theme="dark"] {
   color-scheme: dark;
   --grain-opacity: 0.055;
   --color-scrim: color-mix(in srgb, #000000 62%, transparent);
+  /* Soft warm paper — readable for dark clothes, not a pure-white blast */
+  --color-stage: #e4e0d6;
+  --color-stage-check: #d4cfc4;
+  --color-stage-ink: #3d3a36;
+  --color-stage-ink-muted: #5c574f;
+  --color-stage-ink-faint: #8a847a;
+  --color-stage-ink-strong: #141210;
   --color-mono-0: #121110;
   --color-mono-50: #1a1917;
   --color-mono-100: #252320;
@@ -50,6 +68,12 @@ html[data-theme="dark"] {
     color-scheme: dark;
     --grain-opacity: 0.055;
     --color-scrim: color-mix(in srgb, #000000 62%, transparent);
+    --color-stage: #e4e0d6;
+    --color-stage-check: #d4cfc4;
+    --color-stage-ink: #3d3a36;
+    --color-stage-ink-muted: #5c574f;
+    --color-stage-ink-faint: #8a847a;
+    --color-stage-ink-strong: #141210;
     --color-mono-0: #121110;
     --color-mono-50: #1a1917;
     --color-mono-100: #252320;
@@ -256,25 +280,25 @@ body::before {
   cursor: not-allowed;
 }
 
-/* Nickname hang-tag under clothing photos */
+/* Nickname hang-tag under clothing photos (sits on lit stage) */
 .nickname-tag {
   display: block;
   width: 100%;
   max-width: 14rem;
   margin-inline: auto;
   padding: 0.45rem 0.65rem 0.35rem;
-  border-top: 1px solid var(--color-mono-200);
+  border-top: 1px solid color-mix(in srgb, var(--color-stage-ink) 18%, transparent);
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-align: center;
-  color: var(--color-mono-700);
+  color: var(--color-stage-ink);
   line-height: 1.3;
   text-wrap: balance;
 }
 
 .nickname-tag-readonly {
-  color: var(--color-mono-500);
+  color: var(--color-stage-ink-muted);
 }
 
 .nickname-tag-button {
@@ -290,18 +314,18 @@ body::before {
 }
 
 .nickname-tag-button:hover {
-  color: var(--color-mono-900);
-  background-color: color-mix(in srgb, var(--color-mono-100) 70%, transparent);
+  color: var(--color-stage-ink-strong);
+  background-color: color-mix(in srgb, var(--color-stage-check) 70%, transparent);
 }
 
 .nickname-tag-empty {
-  color: var(--color-mono-300);
+  color: var(--color-stage-ink-faint);
   font-style: normal;
   letter-spacing: 0.1em;
 }
 
 .nickname-tag-empty:hover {
-  color: var(--color-mono-500);
+  color: var(--color-stage-ink-muted);
 }
 
 .nickname-tag-edit {
@@ -311,18 +335,18 @@ body::before {
 .nickname-input {
   width: 100%;
   border: none;
-  border-bottom: 1px solid var(--color-mono-900);
+  border-bottom: 1px solid var(--color-stage-ink-strong);
   background: transparent;
   padding: 0.2rem 0.15rem;
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-align: center;
-  color: var(--color-mono-900);
+  color: var(--color-stage-ink-strong);
 }
 
 .nickname-input::placeholder {
-  color: var(--color-mono-300);
+  color: var(--color-stage-ink-faint);
 }
 
 .nickname-input:focus {
@@ -342,14 +366,14 @@ body::before {
   border: 0;
 }
 
-/* Fashion product stage — subtle checker for cutouts */
+/* Fashion product stage — lit pedestal + subtle checker for cutouts */
 .product-stage {
-  background-color: var(--color-mono-50);
+  background-color: var(--color-stage);
   background-image:
-    linear-gradient(45deg, var(--color-mono-100) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--color-mono-100) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--color-mono-100) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--color-mono-100) 75%);
+    linear-gradient(45deg, var(--color-stage-check) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-stage-check) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-stage-check) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-stage-check) 75%);
   background-size: 16px 16px;
   background-position:
     0 0,
@@ -358,11 +382,27 @@ body::before {
     -8px 0;
 }
 
+/* Overlay badge on garment photos (WASH, etc.) — stage-ink on stage paper */
+.stage-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--color-stage-ink-strong);
+  background-color: color-mix(in srgb, var(--color-stage) 94%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-stage-ink) 22%, transparent);
+  padding: 0.25rem 0.625rem;
+}
+
 /* Surface frame for strips / cards */
 .surface-frame {
   border: 1px solid var(--color-mono-200);
   background-color: var(--color-mono-50);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--color-mono-900) 4%, transparent);
+}
+
+/* Rack that is also a product stage: keep the lit pedestal, not chrome fill */
+.surface-frame.product-stage {
+  background-color: var(--color-stage);
 }
 
 .surface-empty {
