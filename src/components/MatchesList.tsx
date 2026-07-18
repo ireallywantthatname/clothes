@@ -45,82 +45,72 @@ export default function MatchesList({ matches }: Props) {
 
   if (matches.length === 0) {
     return (
-      <div className="w-full pt-4">
-        <h2
-          className="text-xs tracking-widest text-mono-500 mb-3"
-          style={{ fontFamily: "var(--font-dm-mono)" }}
-        >
-          SAVED MATCHES
-        </h2>
-        <div className="flex items-center justify-center h-32 bg-mono-100 border-2 border-mono-200">
-          <p className="text-mono-500 text-sm">
+      <section className="w-full pt-5" aria-label="Saved matches">
+        <h2 className="label-caps mb-3">Saved matches</h2>
+        <div className="flex flex-col items-center justify-center gap-3 h-36 surface-empty px-6">
+          <p className="text-mono-500 text-sm text-center text-pretty">
             No matches saved yet.
           </p>
+          <p className="text-xs text-mono-300 text-center max-w-[16rem] leading-relaxed">
+            Pair a top and bottom on Mix, then save the outfit here.
+          </p>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="w-full pt-4">
-      <div className="flex items-center justify-between mb-2">
-        <h2
-          className="text-xs tracking-widest text-mono-500"
-          style={{ fontFamily: "var(--font-dm-mono)" }}
-        >
-          SAVED MATCHES
-        </h2>
-        <span className="text-xs text-mono-500 tabular-nums">
+    <section className="w-full pt-5" aria-label="Saved matches">
+      <div className="flex items-center justify-between mb-2.5">
+        <h2 className="label-caps">Saved matches</h2>
+        <span className="font-mono text-xs text-mono-500 tabular-nums tracking-wider">
           {matches.length}
         </span>
       </div>
 
       <div className="relative group">
-        {/* Scroll container */}
-        <div
-          ref={containerRef}
-          className="scroll-strip bg-mono-100 border border-mono-200"
-        >
-          {matches.map((match) => (
-            <div key={match.id} className="scroll-card flex flex-col">
-              {/* Top image */}
+        <div ref={containerRef} className="scroll-strip surface-frame">
+          {matches.map((match, index) => (
+            <div
+              key={match.id}
+              className="scroll-card relative flex flex-col"
+            >
               {match.top && (
-                <div className="h-56 flex items-center justify-center p-4 bg-mono-50">
+                <div className="h-56 flex items-center justify-center p-4 product-stage">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={resolveImageUrl(match.top.image_url)}
-                    alt="Top"
+                    alt={`Match ${index + 1} top`}
                     className="max-h-full w-auto max-w-full object-contain"
                     loading="lazy"
                   />
                 </div>
               )}
-              {/* Divider */}
               <div className="h-px bg-mono-200 shrink-0" />
-              {/* Bottom image */}
               {match.bottom && (
-                <div className="h-56 flex items-center justify-center p-4 bg-white">
+                <div className="h-56 flex items-center justify-center p-4 product-stage">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={resolveImageUrl(match.bottom.image_url)}
-                    alt="Bottom"
+                    alt={`Match ${index + 1} bottom`}
                     className="max-h-full w-auto max-w-full object-contain"
                     loading="lazy"
                   />
                 </div>
               )}
 
-              {/* Delete button */}
               <button
+                type="button"
                 onClick={() => setPendingDelete(match.id)}
-                className="absolute top-0 right-0 w-7 h-7 bg-white border-l border-b border-mono-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100 touch-visible"
-                aria-label="Delete match"
+                className="card-action touch-visible top-0 right-0 w-7 border-l border-b"
+                aria-label={`Delete match ${index + 1}`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className="w-3.5 h-3.5 text-mono-500"
+                  className="w-3.5 h-3.5"
+                  aria-hidden="true"
                 >
                   <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
                 </svg>
@@ -129,18 +119,19 @@ export default function MatchesList({ matches }: Props) {
           ))}
         </div>
 
-        {/* Left arrow */}
         {canScrollLeft && (
           <button
+            type="button"
             onClick={() => scrollBy("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-mono-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
+            className="scroll-nav left-0 touch-visible"
             aria-label="Previous match"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-5 h-5 text-mono-900"
+              className="w-5 h-5"
+              aria-hidden="true"
             >
               <path
                 fillRule="evenodd"
@@ -151,18 +142,19 @@ export default function MatchesList({ matches }: Props) {
           </button>
         )}
 
-        {/* Right arrow */}
         {canScrollRight && (
           <button
+            type="button"
             onClick={() => scrollBy("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-mono-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
+            className="scroll-nav right-0 touch-visible"
             aria-label="Next match"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-5 h-5 text-mono-900"
+              className="w-5 h-5"
+              aria-hidden="true"
             >
               <path
                 fillRule="evenodd"
@@ -187,6 +179,6 @@ export default function MatchesList({ matches }: Props) {
         }}
         onCancel={() => setPendingDelete(null)}
       />
-    </div>
+    </section>
   );
 }

@@ -33,7 +33,10 @@ export default async function HomePage() {
   });
 
   return (
-    <main className="flex-1 flex flex-col items-center p-4 pb-8">
+    <main
+      id="main"
+      className="flex-1 flex flex-col items-center px-4 pb-10 pt-1"
+    >
       <HomeContent tops={tops} bottoms={bottoms} matches={matches} />
     </main>
   );

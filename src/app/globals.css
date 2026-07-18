@@ -1,23 +1,283 @@
 @import "tailwindcss";
 
 @theme {
-  --color-mono-0: #ffffff;
-  --color-mono-50: #fafafa;
-  --color-mono-100: #f5f5f5;
-  --color-mono-200: #e5e5e5;
-  --color-mono-500: #737373;
-  --color-mono-800: #262626;
-  --color-mono-900: #0a0a0a;
-  --color-mono-950: #050505;
+  /* Warm paper neutrals — one gray family, tinted warm for fashion feel */
+  --color-mono-0: #faf9f7;
+  --color-mono-50: #f5f3f0;
+  --color-mono-100: #ebe8e4;
+  --color-mono-200: #d9d4cd;
+  --color-mono-300: #b8b2a9;
+  --color-mono-500: #6b6560;
+  --color-mono-700: #3d3a36;
+  --color-mono-800: #2a2724;
+  --color-mono-900: #141210;
+  --color-mono-950: #0c0b0a;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, "Cascadia Code", monospace;
 }
 
-/* Slot-machine scroll strip */
+/* ── Base ─────────────────────────────────────────────── */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-mono-0);
+  color: var(--color-mono-800);
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle grain — breaks digital flatness without competing with photos */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+}
+
+/* Focus rings — visible keyboard affordance */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-mono-900);
+  outline-offset: 2px;
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100%;
+  z-index: 10000;
+  padding: 0.5rem 1rem;
+  background: var(--color-mono-900);
+  color: var(--color-mono-0);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: top 150ms ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+  outline: 2px solid var(--color-mono-0);
+  outline-offset: 2px;
+}
+
+/* Readable body copy */
+.text-pretty {
+  text-wrap: pretty;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* ── Interactive primitives ───────────────────────────── */
+
+.btn-press {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease,
+    transform 150ms ease,
+    opacity 200ms ease;
+}
+
+.btn-press:not(:disabled):active {
+  transform: scale(0.98) translateY(1px);
+}
+
+.btn-primary {
+  background-color: var(--color-mono-900);
+  color: var(--color-mono-0);
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  transition:
+    background-color 200ms ease,
+    transform 150ms ease;
+}
+
+.btn-primary:not(:disabled):hover {
+  background-color: var(--color-mono-950);
+}
+
+.btn-primary:not(:disabled):active {
+  transform: scale(0.98) translateY(1px);
+}
+
+.btn-primary:disabled {
+  background-color: var(--color-mono-200);
+  color: var(--color-mono-500);
+  cursor: not-allowed;
+}
+
+/* Segmented control (tabs / category / toggles) */
+.seg-track {
+  display: flex;
+  gap: 1px;
+  background-color: var(--color-mono-200);
+}
+
+.seg-item {
+  flex: 1;
+  padding-block: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  letter-spacing: 0.1em;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    transform 150ms ease;
+}
+
+.seg-item:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.seg-item-active {
+  background-color: var(--color-mono-900);
+  color: var(--color-mono-0);
+}
+
+.seg-item-idle {
+  background-color: var(--color-mono-0);
+  color: var(--color-mono-500);
+}
+
+.seg-item-idle:hover:not(:disabled) {
+  background-color: var(--color-mono-100);
+  color: var(--color-mono-800);
+}
+
+/* Label style used across section headers */
+.label-caps {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-mono-500);
+}
+
+/* Fashion product stage — subtle checker for cutouts */
+.product-stage {
+  background-color: var(--color-mono-50);
+  background-image:
+    linear-gradient(45deg, var(--color-mono-100) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-mono-100) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-mono-100) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-mono-100) 75%);
+  background-size: 16px 16px;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+}
+
+/* Surface frame for strips / cards */
+.surface-frame {
+  border: 1px solid var(--color-mono-200);
+  background-color: var(--color-mono-50);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--color-mono-900) 4%, transparent);
+}
+
+.surface-empty {
+  border: 1px dashed var(--color-mono-200);
+  background-color: var(--color-mono-50);
+}
+
+/* Scroll chrome arrows */
+.scroll-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-mono-900);
+  background-color: var(--color-mono-0);
+  color: var(--color-mono-900);
+  opacity: 0;
+  transform: translateY(-50%);
+  transition:
+    opacity 200ms ease,
+    background-color 200ms ease,
+    transform 150ms ease;
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--color-mono-900) 8%, transparent);
+}
+
+.scroll-nav:hover {
+  background-color: var(--color-mono-100);
+}
+
+.scroll-nav:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.group:hover .scroll-nav,
+.group:focus-within .scroll-nav {
+  opacity: 1;
+}
+
+/* Icon corner buttons on cards */
+.card-action {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+  border-color: var(--color-mono-200);
+  background-color: var(--color-mono-0);
+  color: var(--color-mono-500);
+  opacity: 0;
+  transition:
+    opacity 200ms ease,
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.card-action:hover {
+  background-color: var(--color-mono-100);
+  color: var(--color-mono-900);
+}
+
+.group:hover .card-action,
+.group:focus-within .card-action {
+  opacity: 1;
+}
+
+/* Always show action buttons on touch devices */
+@media (pointer: coarse) {
+  .touch-visible,
+  .scroll-nav,
+  .card-action {
+    opacity: 1 !important;
+  }
+}
+
+/* ── Slot-machine scroll strip ────────────────────────── */
+
 .scroll-strip {
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .scroll-strip::-webkit-scrollbar {
@@ -29,9 +289,46 @@
   scroll-snap-align: center;
 }
 
-/* Always show action buttons on touch devices (no hover available) */
-@media (pointer: coarse) {
-  .touch-visible {
-    opacity: 1 !important;
+/* ── Dialog motion ────────────────────────────────────── */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 160ms ease-out forwards;
+}
+
+.animate-dialog-in {
+  animation: dialog-in 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Progress bar fill */
+.progress-track {
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-mono-200);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--color-mono-900);
+  transition: width 300ms ease;
 }

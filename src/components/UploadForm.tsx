@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { uploadClothing } from "@/app/actions";
 import {
   removeBackground,
@@ -27,13 +28,11 @@ async function resizeImage(
     img.onload = () => {
       URL.revokeObjectURL(url);
 
-      // Already small enough — return original unchanged
       if (img.naturalWidth <= maxDimension && img.naturalHeight <= maxDimension) {
         resolve(file);
         return;
       }
 
-      // Calculate new dimensions preserving aspect ratio
       let { naturalWidth: w, naturalHeight: h } = img;
       if (w > h) {
         h = Math.round((h * maxDimension) / w);
@@ -102,7 +101,6 @@ export default function UploadForm() {
     label: string;
   }>({ percent: 0, label: "" });
 
-  // Cleanup preview URL on unmount or file change
   useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview);
@@ -110,7 +108,6 @@ export default function UploadForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Mirror shared preload status into local state for the progress UI
   useEffect(() => {
     return subscribeBgPreloadStatus(setPreloadState);
   }, []);
@@ -131,7 +128,6 @@ export default function UploadForm() {
 
   const handleToggleBgOff = useCallback(() => {
     setRemoveBg(false);
-    // Keep shared preload cache; only clear form-level BG intent
     if (status.type === "error") {
       setStatus({ type: "idle" });
     }
@@ -147,7 +143,6 @@ export default function UploadForm() {
         setPreview(URL.createObjectURL(resized));
         setStatus({ type: "idle" });
       } catch {
-        // Fall back to original file if resize fails
         setFile(selectedFile);
         setPreview(URL.createObjectURL(selectedFile));
         setStatus({ type: "idle" });
@@ -183,14 +178,11 @@ export default function UploadForm() {
       formData.append("file", file);
       formData.append("category", category);
 
-      // Remove background if toggled on — wait for model readiness, never silent-fail
       if (removeBg) {
         setStatus({ type: "processing" });
         setProcessingProgress({ percent: 0, label: "" });
         try {
-          // Ensure model is ready (shared preload); surfaces timeout/load errors
           await preloadBackgroundRemoval();
-          // Re-resize for BG removal: smaller dimension + lossless PNG input
           const bgInput = await resizeImage(file, 800, "image/png");
           const progressCb: ProgressCallback = (key, current, total) => {
             const percent =
@@ -225,7 +217,7 @@ export default function UploadForm() {
       if (result.error) {
         setStatus({ type: "error", message: result.error });
       } else {
-        setStatus({ type: "success", message: "Uploaded!" });
+        setStatus({ type: "success", message: "Uploaded" });
         router.refresh();
         setTimeout(() => {
           router.push("/");
@@ -263,14 +255,23 @@ export default function UploadForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col items-center gap-6 w-full max-w-md mx-auto"
+      className="flex flex-col items-stretch gap-6 w-full max-w-md mx-auto"
     >
-      <h1
-        className="text-xl tracking-wider text-mono-900"
-        style={{ fontFamily: "var(--font-dm-mono)" }}
-      >
-        ADD CLOTHES
-      </h1>
+      {/* Page chrome matching home */}
+      <div className="flex items-end justify-between border-b border-mono-200 pb-4">
+        <div className="flex flex-col gap-1">
+          <p className="label-caps text-[0.65rem]">New piece</p>
+          <h1 className="font-mono text-2xl font-medium text-mono-900 tracking-[0.18em] leading-none">
+            ADD CLOTHES
+          </h1>
+        </div>
+        <Link
+          href="/"
+          className="font-mono text-xs tracking-wider text-mono-500 hover:text-mono-900 transition-colors btn-press"
+        >
+          ← BACK
+        </Link>
+      </div>
 
       {/* Drop zone */}
       <div
@@ -279,12 +280,21 @@ export default function UploadForm() {
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`w-full h-56 flex flex-col items-center justify-center border-2 cursor-pointer transition-colors ${
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Select a clothing photo"
+        className={`w-full h-56 flex flex-col items-center justify-center border-2 cursor-pointer transition-[border-color,background-color] duration-200 ${
           dragOver
             ? "border-mono-900 bg-mono-100"
             : preview
-              ? "border-mono-200 bg-mono-50"
-              : "border-mono-200 hover:border-mono-500"
+              ? "border-mono-200 product-stage"
+              : "border-dashed border-mono-200 bg-mono-50 hover:border-mono-500"
         }`}
       >
         {preview ? (
@@ -292,7 +302,7 @@ export default function UploadForm() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
-              alt="Preview"
+              alt="Selected clothing preview"
               className="max-h-full max-w-full object-contain"
             />
             <button
@@ -302,7 +312,7 @@ export default function UploadForm() {
                 handleFileChange(null);
                 if (fileInputRef.current) fileInputRef.current.value = "";
               }}
-              className="absolute top-2 right-2 w-8 h-8 bg-white border border-mono-300 flex items-center justify-center hover:bg-mono-100 transition-colors"
+              className="absolute top-2 right-2 w-8 h-8 bg-mono-0 border border-mono-200 flex items-center justify-center hover:bg-mono-100 transition-colors btn-press"
               aria-label="Remove image"
             >
               <svg
@@ -310,20 +320,22 @@ export default function UploadForm() {
                 viewBox="0 0 20 20"
                 fill="currentColor"
                 className="w-4 h-4 text-mono-500"
+                aria-hidden="true"
               >
                 <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
               </svg>
             </button>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2 text-mono-500 p-4">
+          <div className="flex flex-col items-center gap-2.5 text-mono-500 p-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              className="w-10 h-10"
-              strokeWidth={1}
+              className="w-9 h-9 text-mono-300"
+              strokeWidth={1.25}
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -331,10 +343,10 @@ export default function UploadForm() {
                 d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
               />
             </svg>
-            <p className="text-sm">
+            <p className="text-sm text-mono-700">
               {dragOver ? "Drop it here" : "Tap to select a photo"}
             </p>
-            <p className="text-xs text-mono-500/60">or drag and drop</p>
+            <p className="text-xs text-mono-300">or drag and drop</p>
           </div>
         )}
 
@@ -348,61 +360,45 @@ export default function UploadForm() {
       </div>
 
       {/* Category selector */}
-      <div className="w-full">
-        <p
-          className="text-xs tracking-widest text-mono-500 mb-2"
-          style={{ fontFamily: "var(--font-dm-mono)" }}
-        >
-          CATEGORY
-        </p>
-        <div className="flex gap-px bg-mono-200">
+      <fieldset className="w-full border-0 p-0 m-0">
+        <legend className="label-caps mb-2.5">Category</legend>
+        <div className="seg-track">
           <button
             type="button"
             onClick={() => setCategory("top")}
-            className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
-              category === "top"
-                ? "bg-mono-900 text-white"
-                : "bg-white text-mono-500 hover:bg-mono-100"
+            className={`seg-item ${
+              category === "top" ? "seg-item-active" : "seg-item-idle"
             }`}
-            style={{ fontFamily: "var(--font-dm-mono)" }}
+            aria-pressed={category === "top"}
           >
             TOP
           </button>
           <button
             type="button"
             onClick={() => setCategory("bottom")}
-            className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
-              category === "bottom"
-                ? "bg-mono-900 text-white"
-                : "bg-white text-mono-500 hover:bg-mono-100"
+            className={`seg-item ${
+              category === "bottom" ? "seg-item-active" : "seg-item-idle"
             }`}
-            style={{ fontFamily: "var(--font-dm-mono)" }}
+            aria-pressed={category === "bottom"}
           >
             BOTTOM
           </button>
         </div>
-      </div>
+      </fieldset>
 
       {/* BG Removal toggle */}
       {preview && (
-        <div className="w-full">
-          <p
-            className="text-xs tracking-widest text-mono-500 mb-2"
-            style={{ fontFamily: "var(--font-dm-mono)" }}
-          >
-            BG REMOVAL
-          </p>
-          <div className="flex gap-px bg-mono-200">
+        <fieldset className="w-full border-0 p-0 m-0">
+          <legend className="label-caps mb-2.5">Background removal</legend>
+          <div className="seg-track">
             <button
               type="button"
               onClick={handleToggleBgOn}
               disabled={status.type === "processing"}
-              className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
-                removeBg
-                  ? "bg-mono-900 text-white"
-                  : "bg-white text-mono-500 hover:bg-mono-100"
+              className={`seg-item ${
+                removeBg ? "seg-item-active" : "seg-item-idle"
               }`}
-              style={{ fontFamily: "var(--font-dm-mono)" }}
+              aria-pressed={removeBg}
             >
               ON
             </button>
@@ -410,38 +406,35 @@ export default function UploadForm() {
               type="button"
               onClick={handleToggleBgOff}
               disabled={status.type === "processing"}
-              className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
-                !removeBg
-                  ? "bg-mono-900 text-white"
-                  : "bg-white text-mono-500 hover:bg-mono-100"
+              className={`seg-item ${
+                !removeBg ? "seg-item-active" : "seg-item-idle"
               }`}
-              style={{ fontFamily: "var(--font-dm-mono)" }}
+              aria-pressed={!removeBg}
             >
               OFF
             </button>
           </div>
-          {/* Model preload progress / ready / error */}
           {removeBg && preloadState.phase === "loading" && (
-            <div className="mt-2 w-full">
-              <div className="flex justify-between text-xs text-mono-500 mb-1">
+            <div className="mt-3 w-full">
+              <div className="flex justify-between font-mono text-xs text-mono-500 mb-1.5 tracking-wider">
                 <span>
                   LOADING MODEL
                   {preloadState.device
-                    ? ` (${preloadState.device.toUpperCase()})`
+                    ? ` · ${preloadState.device.toUpperCase()}`
                     : ""}
                 </span>
-                <span>{preloadState.progress}%</span>
+                <span className="tabular-nums">{preloadState.progress}%</span>
               </div>
-              <div className="w-full h-1 bg-mono-200">
+              <div className="progress-track" role="progressbar" aria-valuenow={preloadState.progress} aria-valuemin={0} aria-valuemax={100}>
                 <div
-                  className="h-full bg-mono-900 transition-all duration-300"
+                  className="progress-fill"
                   style={{ width: `${preloadState.progress}%` }}
                 />
               </div>
             </div>
           )}
           {removeBg && preloadState.phase === "ready" && (
-            <p className="text-xs text-mono-500 mt-1">
+            <p className="text-xs text-mono-500 mt-2">
               Model ready
               {preloadState.device
                 ? ` · ${preloadState.device.toUpperCase()}`
@@ -449,93 +442,66 @@ export default function UploadForm() {
             </p>
           )}
           {removeBg && preloadState.phase === "error" && preloadState.error && (
-            <p className="text-xs text-mono-900 mt-1 border border-mono-900 px-2 py-1">
+            <p className="text-xs text-mono-900 mt-2 border border-mono-900 px-2.5 py-1.5" role="alert">
               {preloadState.error}
             </p>
           )}
-        </div>
+        </fieldset>
       )}
 
-      {/* Status messages */}
       {status.type === "error" && status.message && (
-        <div className="w-full border-2 border-mono-900 bg-white px-4 py-2 text-center">
-          <p className="text-sm text-mono-900">{status.message}</p>
+        <div
+          className="w-full border-2 border-mono-900 bg-mono-0 px-4 py-2.5 text-center"
+          role="alert"
+        >
+          <p className="text-sm text-mono-900 text-pretty">{status.message}</p>
         </div>
       )}
 
-      {/* Processing progress bar */}
       {status.type === "processing" && (
         <div className="w-full">
-          <div className="flex justify-between text-xs text-mono-500 mb-1">
+          <div className="flex justify-between font-mono text-xs text-mono-500 mb-1.5 tracking-wider">
             <span>PROCESSING</span>
-            <span>{processingProgress.percent}%</span>
+            <span className="tabular-nums">{processingProgress.percent}%</span>
           </div>
-          <div className="w-full h-1 bg-mono-200">
+          <div
+            className="progress-track"
+            role="progressbar"
+            aria-valuenow={processingProgress.percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
             <div
-              className="h-full bg-mono-900 transition-all duration-300"
+              className="progress-fill"
               style={{ width: `${processingProgress.percent}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* Submit button */}
       <button
         type="submit"
         disabled={!canSubmit}
-        style={{ fontFamily: "var(--font-dm-mono)" }}
-        className={`w-full py-3 text-sm tracking-widest text-white transition-colors ${
+        className={`w-full py-3.5 text-sm tracking-widest font-mono transition-[background-color,transform] duration-200 ${
           canSubmit
-            ? "bg-mono-900 hover:bg-mono-950"
+            ? "btn-primary active:scale-[0.99]"
             : "bg-mono-200 text-mono-500 cursor-not-allowed"
         }`}
       >
         {status.type === "processing" ? (
           <span className="flex items-center justify-center gap-2">
-            <svg
-              className="animate-spin h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
+            <span
+              className="inline-block h-3.5 w-3.5 border border-mono-0/40 border-t-mono-0 rounded-full animate-spin"
+              aria-hidden="true"
+            />
             REMOVING BG
           </span>
         ) : status.type === "uploading" ? (
           <span className="flex items-center justify-center gap-2">
-            <svg
-              className="animate-spin h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
+            <span
+              className="inline-block h-3.5 w-3.5 border border-mono-0/40 border-t-mono-0 rounded-full animate-spin"
+              aria-hidden="true"
+            />
             UPLOADING
           </span>
         ) : status.type === "success" ? (
@@ -543,15 +509,6 @@ export default function UploadForm() {
         ) : (
           "ADD TO CLOSET"
         )}
-      </button>
-
-      {/* Back link */}
-      <button
-        type="button"
-        onClick={() => router.push("/")}
-        className="text-xs text-mono-500 hover:text-mono-900 transition-colors"
-      >
-        &larr; Back
       </button>
     </form>
   );

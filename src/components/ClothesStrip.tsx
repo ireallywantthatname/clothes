@@ -26,12 +26,15 @@ export default function ClothesStrip({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const label = category === "top" ? "TOPS" : "BOTTOMS";
+  const label = category === "top" ? "Tops" : "Bottoms";
   const emptyMessage =
     category === "top" ? "No tops yet" : "No bottoms yet";
 
   const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
+
+  useEffect(() => {
+    onSelectRef.current = onSelect;
+  }, [onSelect]);
 
   // IntersectionObserver to detect which card is centered
   useEffect(() => {
@@ -63,7 +66,6 @@ export default function ClothesStrip({
     return () => observer.disconnect();
   }, [items]);
 
-  // Update scroll button states
   const updateScrollState = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -99,61 +101,52 @@ export default function ClothesStrip({
 
   if (items.length === 0) {
     return (
-      <div className="w-full">
-        <h2
-          className="text-xs tracking-widest text-mono-500 mb-2"
-          style={{ fontFamily: "var(--font-dm-mono)" }}
-        >
-          {label}
-        </h2>
-        <div className="flex items-center justify-center h-48 bg-mono-100 border-2 border-mono-200">
+      <section className="w-full" aria-label={label}>
+        <h2 className="label-caps mb-2.5">{label}</h2>
+        <div className="flex items-center justify-center h-48 surface-empty">
           <p className="text-mono-500 text-sm">{emptyMessage}</p>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-2">
-        <h2
-          className="text-xs tracking-widest text-mono-500"
-          style={{ fontFamily: "var(--font-dm-mono)" }}
-        >
-          {label}
-        </h2>
-        <span className="text-xs text-mono-500 tabular-nums">
+    <section className="w-full" aria-label={label}>
+      <div className="flex items-center justify-between mb-2.5">
+        <h2 className="label-caps">{label}</h2>
+        <span className="font-mono text-xs text-mono-500 tabular-nums tracking-wider">
           {items.length}
         </span>
       </div>
 
       <div className="relative group">
-        {/* Scroll container */}
         <div
           ref={containerRef}
-          className="scroll-strip bg-mono-100 border border-mono-200"
+          className="scroll-strip surface-frame product-stage"
         >
-          {items.map((item) => (
+          {items.map((item, index) => (
             <div
               key={item.id}
               ref={setCardRef(item.id)}
               data-clothes-id={item.id}
               data-clothes-status={item.status}
-              className="scroll-card flex items-center justify-center p-4"
+              className="scroll-card flex items-center justify-center p-5"
             >
               <div
-                className={`relative overflow-hidden transition-[border-color] duration-300 border-2 ${
+                className={`relative overflow-hidden transition-[box-shadow,outline-color] duration-300 outline outline-2 outline-offset-[-1px] ${
                   item.status === "unavailable"
-                    ? "border-mono-200"
+                    ? "outline-mono-200"
                     : selectedId === item.id
-                      ? "border-mono-900"
-                      : "border-transparent"
+                      ? "outline-mono-900 shadow-[3px_3px_0_0_color-mix(in_srgb,var(--color-mono-900)_12%,transparent)]"
+                      : "outline-transparent"
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={resolveImageUrl(item.image_url)}
-                  alt={`${category} clothing item`}
+                  alt={`${category} item ${index + 1}${
+                    item.status === "unavailable" ? ", marked as laundry" : ""
+                  }`}
                   className={`h-64 w-auto max-w-full object-contain transition-all duration-300 ${
                     item.status === "unavailable"
                       ? "opacity-30 grayscale"
@@ -162,49 +155,45 @@ export default function ClothesStrip({
                   loading="lazy"
                 />
 
-                {/* Unavailable overlay label */}
                 {item.status === "unavailable" && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span
-                      className="text-xs tracking-widest text-mono-500 bg-white/80 px-2 py-1"
-                      style={{ fontFamily: "var(--font-dm-mono)" }}
-                    >
+                    <span className="font-mono text-xs tracking-widest text-mono-700 bg-mono-0/90 px-2.5 py-1 border border-mono-200">
                       WASH
                     </span>
                   </div>
                 )}
 
-                {/* Delete button — top-right */}
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     onDelete(item.id, item.image_url);
                   }}
-                  className="absolute top-0 right-0 w-7 h-7 bg-white border-l border-b border-mono-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100 touch-visible"
-                  aria-label="Delete item"
+                  className="card-action touch-visible top-0 right-0 w-7 border-l border-b"
+                  aria-label={`Delete ${category} item ${index + 1}`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor"
-                    className="w-3.5 h-3.5 text-mono-500"
+                    className="w-3.5 h-3.5"
+                    aria-hidden="true"
                   >
                     <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
                   </svg>
                 </button>
 
-                {/* Status toggle — bottom-left */}
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggleStatus(item.id);
                   }}
-                  className={`absolute bottom-0 left-0 h-7 px-2 border-r border-t border-mono-200 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-xs tracking-wider touch-visible ${
+                  className={`card-action touch-visible bottom-0 left-0 px-2 border-r border-t font-mono text-xs tracking-wider ${
                     item.status === "available"
-                      ? "bg-white text-mono-500 hover:bg-mono-100"
-                      : "bg-mono-900 text-white hover:bg-mono-950"
+                      ? ""
+                      : "!bg-mono-900 !text-mono-0 hover:!bg-mono-950"
                   }`}
-                  style={{ fontFamily: "var(--font-dm-mono)" }}
                   aria-label={
                     item.status === "available"
                       ? "Mark as unavailable"
@@ -218,18 +207,19 @@ export default function ClothesStrip({
           ))}
         </div>
 
-        {/* Left arrow */}
         {canScrollLeft && (
           <button
+            type="button"
             onClick={() => scrollBy("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-mono-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
+            className="scroll-nav left-0 touch-visible"
             aria-label="Previous item"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-5 h-5 text-mono-900"
+              className="w-5 h-5"
+              aria-hidden="true"
             >
               <path
                 fillRule="evenodd"
@@ -240,18 +230,19 @@ export default function ClothesStrip({
           </button>
         )}
 
-        {/* Right arrow */}
         {canScrollRight && (
           <button
+            type="button"
             onClick={() => scrollBy("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-mono-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-mono-100"
+            className="scroll-nav right-0 touch-visible"
             aria-label="Next item"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-5 h-5 text-mono-900"
+              className="w-5 h-5"
+              aria-hidden="true"
             >
               <path
                 fillRule="evenodd"
@@ -262,6 +253,6 @@ export default function ClothesStrip({
           </button>
         )}
       </div>
-    </div>
+    </section>
   );
 }

@@ -32,8 +32,7 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-8 w-full pt-4">
-      {/* Tops strip */}
+    <div className="flex flex-col items-center gap-7 w-full pt-5">
       <ClothesStrip
         items={tops}
         category="top"
@@ -44,18 +43,14 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
       />
 
       {/* Connector */}
-      <div className="flex items-center gap-4 w-full">
+      <div className="flex items-center gap-4 w-full" aria-hidden="true">
         <div className="flex-1 h-px bg-mono-200" />
-        <span
-          className="text-xs text-mono-500 tracking-wider"
-          style={{ fontFamily: "var(--font-dm-mono)" }}
-        >
+        <span className="font-mono text-[0.65rem] text-mono-500 tracking-[0.2em]">
           WITH
         </span>
         <div className="flex-1 h-px bg-mono-200" />
       </div>
 
-      {/* Bottoms strip */}
       <ClothesStrip
         items={bottoms}
         category="bottom"
@@ -65,7 +60,6 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
         onDelete={handleDelete}
       />
 
-      {/* Save button */}
       <SaveMatchButton
         topId={selectedTopId}
         bottomId={selectedBottomId}

@@ -19,90 +19,94 @@ export default function HomeContent({ tops, bottoms, matches }: Props) {
   return (
     <div className="w-full max-w-lg mx-auto">
       {/* Sticky header + tabs */}
-      <div className="sticky top-0 z-10 bg-mono-0 pt-4 -mt-4">
-        {/* Header */}
-        <div className="flex items-center justify-between w-full border-b border-mono-200 pb-4">
-          <h1
-            className="text-2xl font-medium text-mono-900 tracking-wider"
-            style={{ fontFamily: "var(--font-dm-mono)" }}
-          >
-            CLOTHES
-          </h1>
+      <header className="sticky top-0 z-10 bg-mono-0/95 backdrop-blur-sm pt-4 -mt-1">
+        <div className="flex items-end justify-between w-full border-b border-mono-200 pb-4">
+          <div className="flex flex-col gap-1">
+            <p className="label-caps text-[0.65rem]">Closet</p>
+            <h1 className="font-mono text-3xl font-medium text-mono-900 tracking-[0.22em] leading-none">
+              CLOTHES
+            </h1>
+          </div>
           <Link
             href="/upload"
-            className="px-4 py-2 bg-mono-900 text-white text-xs tracking-wider hover:bg-mono-950 transition-colors"
-            style={{ fontFamily: "var(--font-dm-mono)" }}
+            className="btn-primary px-4 py-2.5 text-xs tracking-wider"
           >
             + ADD
           </Link>
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-px bg-mono-200">
+        <div className="seg-track" role="tablist" aria-label="Views">
           <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "mix"}
             onClick={() => setTab("mix")}
-            className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
-              tab === "mix"
-                ? "bg-mono-900 text-white"
-                : "bg-white text-mono-500 hover:bg-mono-100"
+            className={`seg-item ${
+              tab === "mix" ? "seg-item-active" : "seg-item-idle"
             }`}
-            style={{ fontFamily: "var(--font-dm-mono)" }}
           >
             MIX
           </button>
           <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "saved"}
             onClick={() => setTab("saved")}
-            className={`flex-1 py-3 text-sm tracking-wider transition-colors ${
-              tab === "saved"
-                ? "bg-mono-900 text-white"
-                : "bg-white text-mono-500 hover:bg-mono-100"
+            className={`seg-item ${
+              tab === "saved" ? "seg-item-active" : "seg-item-idle"
             }`}
-            style={{ fontFamily: "var(--font-dm-mono)" }}
           >
             SAVED
+            {matches.length > 0 && (
+              <span
+                className={`ml-1.5 tabular-nums text-[0.7rem] ${
+                  tab === "saved" ? "text-mono-0/70" : "text-mono-300"
+                }`}
+              >
+                {matches.length}
+              </span>
+            )}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      {tab === "mix" ? (
-        hasItems ? (
-          <ClothesSlotMachine tops={tops} bottoms={bottoms} />
-        ) : (
-          /* Empty state */
-          <div className="flex flex-col items-center gap-6 py-20 w-full">
-            <div className="w-16 h-16 border-2 border-mono-200 flex items-center justify-center">
-              <span
-                className="text-2xl text-mono-500"
-                style={{ fontFamily: "var(--font-dm-mono)" }}
-              >
-                [ ]
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <h2
-                className="text-lg text-mono-900 tracking-wide"
-                style={{ fontFamily: "var(--font-dm-mono)" }}
-              >
-                CLOSET EMPTY
-              </h2>
-              <p className="text-sm text-mono-500 text-center max-w-xs">
-                Upload photos of your clothes to start mixing and matching
-                outfits.
-              </p>
-            </div>
-            <Link
-              href="/upload"
-              className="px-6 py-3 bg-mono-900 text-white text-sm tracking-wider hover:bg-mono-950 transition-colors"
-              style={{ fontFamily: "var(--font-dm-mono)" }}
+      <div className="pt-1">
+        {tab === "mix" ? (
+          hasItems ? (
+            <ClothesSlotMachine tops={tops} bottoms={bottoms} />
+          ) : (
+            <section
+              className="flex flex-col items-center gap-7 py-16 w-full"
+              aria-label="Empty closet"
             >
-              ADD FIRST ITEM
-            </Link>
-          </div>
-        )
-      ) : (
-        <MatchesList matches={matches} />
-      )}
+              <div className="w-20 h-20 surface-empty flex items-center justify-center">
+                <span className="font-mono text-xl text-mono-300 tracking-widest">
+                  [ ]
+                </span>
+              </div>
+              <div className="flex flex-col items-center gap-2.5">
+                <h2 className="font-mono text-lg text-mono-900 tracking-[0.18em] text-balance">
+                  CLOSET EMPTY
+                </h2>
+                <p className="text-sm text-mono-500 text-center max-w-xs leading-relaxed text-pretty">
+                  Upload photos of your clothes to start mixing and matching
+                  outfits.
+                </p>
+              </div>
+              <Link
+                href="/upload"
+                className="btn-primary px-6 py-3 text-sm tracking-wider"
+              >
+                ADD FIRST ITEM
+              </Link>
+            </section>
+          )
+        ) : (
+          <MatchesList matches={matches} />
+        )}
+      </div>
     </div>
   );
 }
