@@ -14,6 +14,7 @@ import type {
   ProgressCallback,
   BgPreloadStatus,
 } from "@/lib/removeBackground";
+import ThemeToggle from "./ThemeToggle";
 
 async function resizeImage(
   file: File,
@@ -270,12 +271,15 @@ export default function UploadForm() {
             ADD CLOTHES
           </h1>
         </div>
-        <Link
-          href="/"
-          className="font-mono text-xs tracking-wider text-mono-500 hover:text-mono-900 transition-colors btn-press"
-        >
-          ← BACK
-        </Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Link
+            href="/"
+            className="font-mono text-xs tracking-wider text-mono-500 hover:text-mono-900 transition-colors btn-press"
+          >
+            ← BACK
+          </Link>
+        </div>
       </div>
 
       {/* Drop zone */}

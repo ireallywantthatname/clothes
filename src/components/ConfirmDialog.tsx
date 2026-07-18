@@ -72,7 +72,7 @@ export default function ConfirmDialog({
       aria-describedby="confirm-dialog-message"
     >
       <div
-        className="absolute inset-0 bg-mono-900/45 animate-fade-in"
+        className="absolute inset-0 dialog-scrim animate-fade-in"
         aria-hidden="true"
         onClick={onCancel}
       />

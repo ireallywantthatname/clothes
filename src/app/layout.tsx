@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, DM_Mono } from "next/font/google";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,8 +33,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme="system"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${dmMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-mono-0 text-mono-800 font-sans">
         <a href="#main" className="skip-link">
           Skip to content

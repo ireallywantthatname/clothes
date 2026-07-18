@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import ClothesSlotMachine from "./ClothesSlotMachine";
 import MatchesList from "./MatchesList";
+import ThemeToggle from "./ThemeToggle";
 import type { ClothingItem, Match } from "@/lib/types";
 
 type Props = {
@@ -26,12 +27,15 @@ export default function HomeContent({ tops, bottoms, matches }: Props) {
               clothes
             </h1>
           </div>
-          <Link
-            href="/upload"
-            className="btn-primary px-4 py-2.5 text-xs tracking-wider"
-          >
-            + ADD
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/upload"
+              className="btn-primary px-4 py-2.5 text-xs tracking-wider"
+            >
+              + ADD
+            </Link>
+          </div>
         </div>
 
         {/* Tab bar */}
