@@ -53,6 +53,9 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
         onNicknameChange={handleNicknameChange}
+        autoScrollDirection="forward"
+        autoScrollOffsetMs={0}
+        autoScrollPaused={pendingDelete !== null}
       />
 
       {/* Connector */}
@@ -72,6 +75,9 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
         onNicknameChange={handleNicknameChange}
+        autoScrollDirection="backward"
+        autoScrollOffsetMs={2100}
+        autoScrollPaused={pendingDelete !== null}
       />
 
       <SaveMatchButton

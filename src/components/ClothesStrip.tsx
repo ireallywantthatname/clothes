@@ -1,9 +1,22 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  type FocusEvent,
+} from "react";
 import type { ClothingItem } from "@/lib/types";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import NicknameTag from "./NicknameTag";
+
+/** Dwell time on each piece while auto-scrolling (idle carousel). */
+const AUTO_SCROLL_INTERVAL_MS = 4200;
+/** After the user stops interacting, wait this long before resuming. */
+const AUTO_SCROLL_RESUME_MS = 5500;
+
+type AutoScrollDirection = "forward" | "backward";
 
 type Props = {
   items: ClothingItem[];
@@ -13,6 +26,15 @@ type Props = {
   onToggleStatus: (id: string) => void;
   onDelete: (id: string, imageUrl: string) => void;
   onNicknameChange: (id: string, nickname: string | null) => Promise<void>;
+  /**
+   * Idle carousel direction. Tops and bottoms should use opposite values
+   * so the racks counter-scroll when left alone.
+   */
+  autoScrollDirection?: AutoScrollDirection;
+  /** Stagger start so paired racks don't tick in lockstep. */
+  autoScrollOffsetMs?: number;
+  /** Hard pause (e.g. confirm dialog open). */
+  autoScrollPaused?: boolean;
 };
 
 export default function ClothesStrip({
@@ -23,11 +45,24 @@ export default function ClothesStrip({
   onToggleStatus,
   onDelete,
   onNicknameChange,
+  autoScrollDirection,
+  autoScrollOffsetMs = 0,
+  autoScrollPaused = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  /** True while pointer/focus/touch is actively on this rack. */
+  const [userHolding, setUserHolding] = useState(false);
+  /** True briefly after a manual scroll/nav so auto-scroll waits. */
+  const [userCooldown, setUserCooldown] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [pageVisible, setPageVisible] = useState(true);
+  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Skip treating programmatic scrolls as user interaction. */
+  const programmaticScrollRef = useRef(false);
 
   const label = category === "top" ? "Tops" : "Bottoms";
   const emptyMessage =
@@ -38,6 +73,21 @@ export default function ClothesStrip({
   useEffect(() => {
     onSelectRef.current = onSelect;
   }, [onSelect]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setPrefersReducedMotion(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    const onVisibility = () => setPageVisible(document.visibilityState === "visible");
+    onVisibility();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   // IntersectionObserver to detect which card is centered
   useEffect(() => {
@@ -78,21 +128,166 @@ export default function ClothesStrip({
     );
   }, []);
 
+  const markUserScroll = useCallback(() => {
+    if (programmaticScrollRef.current) return;
+    setUserCooldown(true);
+    if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+    cooldownTimerRef.current = setTimeout(() => {
+      setUserCooldown(false);
+      cooldownTimerRef.current = null;
+    }, AUTO_SCROLL_RESUME_MS);
+  }, []);
+
+  const getCardWidth = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return 0;
+    return container.clientWidth;
+  }, []);
+
+  const getCurrentIndex = useCallback(() => {
+    const container = containerRef.current;
+    const width = getCardWidth();
+    if (!container || width <= 0) return 0;
+    return Math.round(container.scrollLeft / width);
+  }, [getCardWidth]);
+
+  const scrollToIndex = useCallback(
+    (index: number, behavior: ScrollBehavior = "smooth") => {
+      const container = containerRef.current;
+      const width = getCardWidth();
+      if (!container || width <= 0) return;
+      const clamped = Math.max(0, Math.min(items.length - 1, index));
+      programmaticScrollRef.current = true;
+      container.scrollTo({ left: clamped * width, behavior });
+      // Hold the flag through the smooth-scroll settle so residual events
+      // don't look like user input.
+      window.setTimeout(
+        () => {
+          programmaticScrollRef.current = false;
+          updateScrollState();
+        },
+        behavior === "smooth" ? 500 : 80,
+      );
+    },
+    [getCardWidth, items.length, updateScrollState],
+  );
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     updateScrollState();
-    container.addEventListener("scroll", updateScrollState, { passive: true });
-    return () => container.removeEventListener("scroll", updateScrollState);
-  }, [updateScrollState, items]);
+
+    const onScroll = () => {
+      updateScrollState();
+      markUserScroll();
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [updateScrollState, markUserScroll, items]);
+
+  // Counter-scroll racks start at opposite ends of the closet.
+  useEffect(() => {
+    if (autoScrollDirection !== "backward" || items.length < 2) return;
+    const id = window.requestAnimationFrame(() => {
+      scrollToIndex(items.length - 1, "auto");
+    });
+    return () => window.cancelAnimationFrame(id);
+    // Only on mount / direction or length change — not every scrollToIndex identity flip
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoScrollDirection, items.length]);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+      if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+    };
+  }, []);
 
   const scrollBy = (direction: "left" | "right") => {
-    const container = containerRef.current;
-    if (!container) return;
-    const cardWidth = container.clientWidth;
-    const delta = direction === "left" ? -cardWidth : cardWidth;
-    container.scrollBy({ left: delta, behavior: "smooth" });
+    markUserScroll();
+    const current = getCurrentIndex();
+    scrollToIndex(
+      direction === "left" ? current - 1 : current + 1,
+      prefersReducedMotion ? "auto" : "smooth",
+    );
   };
+
+  const advanceCarousel = useCallback(() => {
+    if (!autoScrollDirection || items.length < 2) return;
+    const n = items.length;
+    const current = getCurrentIndex();
+    const step = autoScrollDirection === "forward" ? 1 : -1;
+    let next = current + step;
+    let behavior: ScrollBehavior = prefersReducedMotion ? "auto" : "smooth";
+
+    // Wrap at the ends with an instant jump so we don't glide through every card.
+    if (next >= n) {
+      next = 0;
+      behavior = "auto";
+    } else if (next < 0) {
+      next = n - 1;
+      behavior = "auto";
+    }
+
+    scrollToIndex(next, behavior);
+  }, [
+    autoScrollDirection,
+    getCurrentIndex,
+    items.length,
+    prefersReducedMotion,
+    scrollToIndex,
+  ]);
+
+  // Idle auto-scroll: opposite racks counter-rotate when the user leaves them alone.
+  useEffect(() => {
+    if (autoTimerRef.current) {
+      clearTimeout(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
+
+    const shouldRun =
+      !!autoScrollDirection &&
+      items.length >= 2 &&
+      !autoScrollPaused &&
+      !userHolding &&
+      !userCooldown &&
+      !prefersReducedMotion &&
+      pageVisible;
+
+    if (!shouldRun) return;
+
+    let cancelled = false;
+
+    const schedule = (delay: number) => {
+      autoTimerRef.current = setTimeout(() => {
+        if (cancelled) return;
+        advanceCarousel();
+        schedule(AUTO_SCROLL_INTERVAL_MS);
+      }, delay);
+    };
+
+    // First tick waits interval + stagger so both racks don't jump on mount.
+    schedule(AUTO_SCROLL_INTERVAL_MS + autoScrollOffsetMs);
+
+    return () => {
+      cancelled = true;
+      if (autoTimerRef.current) {
+        clearTimeout(autoTimerRef.current);
+        autoTimerRef.current = null;
+      }
+    };
+  }, [
+    advanceCarousel,
+    autoScrollDirection,
+    autoScrollOffsetMs,
+    autoScrollPaused,
+    items.length,
+    pageVisible,
+    prefersReducedMotion,
+    userCooldown,
+    userHolding,
+  ]);
 
   const setCardRef = (id: string) => (el: HTMLDivElement | null) => {
     if (el) {
@@ -100,6 +295,15 @@ export default function ClothesStrip({
     } else {
       cardRefs.current.delete(id);
     }
+  };
+
+  const onPointerEnter = () => setUserHolding(true);
+  const onPointerLeave = () => setUserHolding(false);
+  const onFocusCapture = () => setUserHolding(true);
+  const onBlurCapture = (e: FocusEvent<HTMLDivElement>) => {
+    const next = e.relatedTarget as Node | null;
+    if (next && e.currentTarget.contains(next)) return;
+    setUserHolding(false);
   };
 
   if (items.length === 0) {
@@ -122,10 +326,17 @@ export default function ClothesStrip({
         </span>
       </div>
 
-      <div className="relative group">
+      <div
+        className="relative group"
+        onPointerEnter={onPointerEnter}
+        onPointerLeave={onPointerLeave}
+        onFocusCapture={onFocusCapture}
+        onBlurCapture={onBlurCapture}
+      >
         <div
           ref={containerRef}
           className="scroll-strip surface-frame product-stage"
+          aria-roledescription="carousel"
         >
           {items.map((item, index) => (
             <div
