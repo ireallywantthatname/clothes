@@ -22,9 +22,8 @@ export default function HomeContent({ tops, bottoms, matches }: Props) {
       <header className="sticky top-0 z-10 bg-mono-0/95 backdrop-blur-sm pt-4 -mt-1">
         <div className="flex items-end justify-between w-full border-b border-mono-200 pb-4">
           <div className="flex flex-col gap-1">
-            <p className="label-caps text-[0.65rem]">Closet</p>
-            <h1 className="font-mono text-3xl font-medium text-mono-900 tracking-[0.22em] leading-none">
-              CLOTHES
+            <h1 className="font-mono text-3xl font-medium text-mono-900 tracking-[0.22em] leading-none lowercase">
+              clothes
             </h1>
           </div>
           <Link

@@ -14,12 +14,12 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Clothes — mix and match your closet",
+  title: "clothes",
   description:
     "Upload pieces from your wardrobe, scroll to pair tops and bottoms, and save outfits that work.",
   openGraph: {
-    title: "Clothes",
-    description: "Mix and match outfits from your closet",
+    title: "clothes",
+    description: "Upload pieces from your wardrobe, scroll to pair tops and bottoms, and save outfits that work.",
     type: "website",
   },
 };
