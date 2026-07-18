@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import type { ClothingItem } from "@/lib/types";
 import { resolveImageUrl } from "@/lib/imageUrl";
+import NicknameTag from "./NicknameTag";
 
 type Props = {
   items: ClothingItem[];
@@ -11,6 +12,7 @@ type Props = {
   onSelect: (id: string | null) => void;
   onToggleStatus: (id: string) => void;
   onDelete: (id: string, imageUrl: string) => void;
+  onNicknameChange: (id: string, nickname: string | null) => Promise<void>;
 };
 
 export default function ClothesStrip({
@@ -20,6 +22,7 @@ export default function ClothesStrip({
   onSelect,
   onToggleStatus,
   onDelete,
+  onNicknameChange,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -133,7 +136,7 @@ export default function ClothesStrip({
               className="scroll-card flex items-center justify-center p-5"
             >
               <div
-                className={`relative overflow-hidden transition-[box-shadow,outline-color] duration-300 outline outline-2 outline-offset-[-1px] ${
+                className={`relative flex flex-col items-center overflow-hidden transition-[box-shadow,outline-color] duration-300 outline outline-2 outline-offset-[-1px] bg-mono-0/40 ${
                   item.status === "unavailable"
                     ? "outline-mono-200"
                     : selectedId === item.id
@@ -141,67 +144,89 @@ export default function ClothesStrip({
                       : "outline-transparent"
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={resolveImageUrl(item.image_url)}
-                  alt={`${category} item ${index + 1}${
-                    item.status === "unavailable" ? ", marked as laundry" : ""
-                  }`}
-                  className={`h-64 w-auto max-w-full object-contain transition-all duration-300 ${
-                    item.status === "unavailable"
-                      ? "opacity-30 grayscale"
-                      : ""
-                  }`}
-                  loading="lazy"
-                />
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={resolveImageUrl(item.image_url)}
+                    alt={
+                      item.nickname
+                        ? `${item.nickname}${
+                            item.status === "unavailable"
+                              ? ", marked as laundry"
+                              : ""
+                          }`
+                        : `${category} item ${index + 1}${
+                            item.status === "unavailable"
+                              ? ", marked as laundry"
+                              : ""
+                          }`
+                    }
+                    className={`h-64 w-auto max-w-full object-contain transition-all duration-300 ${
+                      item.status === "unavailable"
+                        ? "opacity-30 grayscale"
+                        : ""
+                    }`}
+                    loading="lazy"
+                  />
 
-                {item.status === "unavailable" && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="font-mono text-xs tracking-widest text-mono-700 bg-mono-0/90 px-2.5 py-1 border border-mono-200">
-                      WASH
-                    </span>
-                  </div>
-                )}
+                  {item.status === "unavailable" && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="font-mono text-xs tracking-widest text-mono-700 bg-mono-0/90 px-2.5 py-1 border border-mono-200">
+                        WASH
+                      </span>
+                    </div>
+                  )}
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(item.id, item.image_url);
-                  }}
-                  className="card-action touch-visible top-0 right-0 w-7 border-l border-b"
-                  aria-label={`Delete ${category} item ${index + 1}`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    className="w-3.5 h-3.5"
-                    aria-hidden="true"
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item.id, item.image_url);
+                    }}
+                    className="card-action touch-visible top-0 right-0 w-7 border-l border-b"
+                    aria-label={
+                      item.nickname
+                        ? `Delete ${item.nickname}`
+                        : `Delete ${category} item ${index + 1}`
+                    }
                   >
-                    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                  </svg>
-                </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-3.5 h-3.5"
+                      aria-hidden="true"
+                    >
+                      <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                    </svg>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleStatus(item.id);
-                  }}
-                  className={`card-action touch-visible bottom-0 left-0 px-2 border-r border-t font-mono text-xs tracking-wider ${
-                    item.status === "available"
-                      ? ""
-                      : "!bg-mono-900 !text-mono-0 hover:!bg-mono-950"
-                  }`}
-                  aria-label={
-                    item.status === "available"
-                      ? "Mark as unavailable"
-                      : "Mark as available"
-                  }
-                >
-                  {item.status === "available" ? "CLN" : "DRTY"}
-                </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleStatus(item.id);
+                    }}
+                    className={`card-action touch-visible bottom-0 left-0 px-2 border-r border-t font-mono text-xs tracking-wider ${
+                      item.status === "available"
+                        ? ""
+                        : "!bg-mono-900 !text-mono-0 hover:!bg-mono-950"
+                    }`}
+                    aria-label={
+                      item.status === "available"
+                        ? "Mark as unavailable"
+                        : "Mark as available"
+                    }
+                  >
+                    {item.status === "available" ? "CLN" : "DRTY"}
+                  </button>
+                </div>
+
+                <NicknameTag
+                  nickname={item.nickname}
+                  categoryLabel={category}
+                  onSave={(next) => onNicknameChange(item.id, next)}
+                />
               </div>
             </div>
           ))}

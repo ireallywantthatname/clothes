@@ -42,9 +42,19 @@ async function deleteFile(imageUrl: string): Promise<void> {
   }
 }
 
+const NICKNAME_MAX = 40;
+
+function normalizeNickname(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim().replace(/\s+/g, " ");
+  if (!trimmed) return null;
+  return trimmed.slice(0, NICKNAME_MAX);
+}
+
 export async function uploadClothing(formData: FormData) {
   const file = formData.get("file") as File | null;
   const category = formData.get("category") as string | null;
+  const nickname = normalizeNickname(formData.get("nickname"));
 
   if (!file || !(file instanceof File)) {
     return { error: "Please select an image file." };
@@ -73,8 +83,8 @@ export async function uploadClothing(formData: FormData) {
   // Insert into database
   try {
     await db.execute({
-      sql: "INSERT INTO clothes (id, image_url, category) VALUES (?, ?, ?)",
-      args: [crypto.randomUUID(), imageUrl, category],
+      sql: "INSERT INTO clothes (id, image_url, category, nickname) VALUES (?, ?, ?, ?)",
+      args: [crypto.randomUUID(), imageUrl, category, nickname],
     });
   } catch (e: unknown) {
     // Clean up the uploaded file on DB failure
@@ -84,6 +94,28 @@ export async function uploadClothing(formData: FormData) {
 
   revalidatePath("/");
   return { success: true };
+}
+
+export async function updateNickname(itemId: string, nickname: string | null) {
+  if (!itemId) return { error: "No item specified." };
+
+  const normalized = normalizeNickname(nickname);
+
+  const result = await db.execute({
+    sql: "SELECT id FROM clothes WHERE id = ?",
+    args: [itemId],
+  });
+  if ((result.rows as unknown[]).length === 0) {
+    return { error: "Item not found." };
+  }
+
+  await db.execute({
+    sql: "UPDATE clothes SET nickname = ? WHERE id = ?",
+    args: [normalized, itemId],
+  });
+
+  revalidatePath("/");
+  return { success: true, nickname: normalized };
 }
 
 export async function saveMatch(topId: string, bottomId: string) {

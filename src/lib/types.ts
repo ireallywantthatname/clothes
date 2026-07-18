@@ -3,6 +3,8 @@ export type ClothingItem = {
   image_url: string;
   category: "top" | "bottom";
   status: "available" | "unavailable";
+  /** Personal name for the piece (e.g. "navy henley"). Null when unset. */
+  nickname: string | null;
   created_at: string;
 };
 

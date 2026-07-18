@@ -170,6 +170,123 @@ body::before {
   color: var(--color-mono-500);
 }
 
+/* Text field — hang-tag under garment photos */
+.field-input {
+  width: 100%;
+  border: 1px solid var(--color-mono-200);
+  background-color: var(--color-mono-0);
+  padding: 0.7rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  color: var(--color-mono-900);
+  transition: border-color 200ms ease;
+}
+
+.field-input::placeholder {
+  color: var(--color-mono-300);
+  letter-spacing: 0.06em;
+}
+
+.field-input:hover:not(:disabled) {
+  border-color: var(--color-mono-300);
+}
+
+.field-input:focus {
+  border-color: var(--color-mono-900);
+}
+
+.field-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Nickname hang-tag under clothing photos */
+.nickname-tag {
+  display: block;
+  width: 100%;
+  max-width: 14rem;
+  margin-inline: auto;
+  padding: 0.45rem 0.65rem 0.35rem;
+  border-top: 1px solid var(--color-mono-200);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-align: center;
+  color: var(--color-mono-700);
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.nickname-tag-readonly {
+  color: var(--color-mono-500);
+}
+
+.nickname-tag-button {
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  cursor: text;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.nickname-tag-button:hover {
+  color: var(--color-mono-900);
+  background-color: color-mix(in srgb, var(--color-mono-100) 70%, transparent);
+}
+
+.nickname-tag-empty {
+  color: var(--color-mono-300);
+  font-style: normal;
+  letter-spacing: 0.1em;
+}
+
+.nickname-tag-empty:hover {
+  color: var(--color-mono-500);
+}
+
+.nickname-tag-edit {
+  padding-block: 0.25rem;
+}
+
+.nickname-input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--color-mono-900);
+  background: transparent;
+  padding: 0.2rem 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-align: center;
+  color: var(--color-mono-900);
+}
+
+.nickname-input::placeholder {
+  color: var(--color-mono-300);
+}
+
+.nickname-input:focus {
+  outline: none;
+}
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Fashion product stage — subtle checker for cutouts */
 .product-stage {
   background-color: var(--color-mono-50);

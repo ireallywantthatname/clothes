@@ -82,6 +82,7 @@ export default function UploadForm() {
   const isSubmitting = useRef(false);
   const [file, setFile] = useState<File | null>(null);
   const [category, setCategory] = useState<"top" | "bottom" | null>(null);
+  const [nickname, setNickname] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [status, setStatus] = useState<{
     type: "idle" | "uploading" | "processing" | "error" | "success";
@@ -177,6 +178,10 @@ export default function UploadForm() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("category", category);
+      const trimmedNickname = nickname.trim();
+      if (trimmedNickname) {
+        formData.append("nickname", trimmedNickname);
+      }
 
       if (removeBg) {
         setStatus({ type: "processing" });
@@ -385,6 +390,32 @@ export default function UploadForm() {
           </button>
         </div>
       </fieldset>
+
+      {/* Nickname — optional hang-tag name for the piece */}
+      <div className="w-full">
+        <label htmlFor="upload-nickname" className="label-caps mb-2.5 block">
+          Nickname
+          <span className="ml-2 normal-case tracking-normal text-mono-300">
+            optional
+          </span>
+        </label>
+        <input
+          id="upload-nickname"
+          type="text"
+          value={nickname}
+          maxLength={40}
+          onChange={(e) => setNickname(e.target.value)}
+          placeholder="e.g. navy henley"
+          autoComplete="off"
+          className="field-input"
+          disabled={
+            status.type === "uploading" || status.type === "processing"
+          }
+        />
+        <p className="mt-1.5 font-mono text-[0.65rem] tracking-wider text-mono-300">
+          {nickname.trim().length}/40
+        </p>
+      </div>
 
       {/* BG Removal toggle */}
       {preview && (

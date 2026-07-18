@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import ClothesStrip from "./ClothesStrip";
 import SaveMatchButton from "./SaveMatchButton";
 import ConfirmDialog from "./ConfirmDialog";
-import { toggleItemStatus, deleteClothingItem } from "@/app/actions";
+import {
+  toggleItemStatus,
+  deleteClothingItem,
+  updateNickname,
+} from "@/app/actions";
 import type { ClothingItem } from "@/lib/types";
 
 type Props = {
@@ -31,6 +35,14 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
     setPendingDelete({ id, imageUrl });
   };
 
+  const handleNicknameChange = async (
+    id: string,
+    nickname: string | null,
+  ) => {
+    await updateNickname(id, nickname);
+    router.refresh();
+  };
+
   return (
     <div className="flex flex-col items-center gap-7 w-full pt-5">
       <ClothesStrip
@@ -40,6 +52,7 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
         onSelect={setSelectedTopId}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
+        onNicknameChange={handleNicknameChange}
       />
 
       {/* Connector */}
@@ -58,6 +71,7 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
         onSelect={setSelectedBottomId}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
+        onNicknameChange={handleNicknameChange}
       />
 
       <SaveMatchButton

@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "./ConfirmDialog";
+import NicknameTag from "./NicknameTag";
 import { deleteMatch } from "@/app/actions";
 import type { Match } from "@/lib/types";
 import { resolveImageUrl } from "@/lib/imageUrl";
@@ -76,25 +77,41 @@ export default function MatchesList({ matches }: Props) {
               className="scroll-card relative flex flex-col"
             >
               {match.top && (
-                <div className="h-56 flex items-center justify-center p-4 product-stage">
+                <div className="h-56 flex flex-col items-center justify-center p-4 product-stage">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={resolveImageUrl(match.top.image_url)}
-                    alt={`Match ${index + 1} top`}
-                    className="max-h-full w-auto max-w-full object-contain"
+                    alt={
+                      match.top.nickname
+                        ? match.top.nickname
+                        : `Match ${index + 1} top`
+                    }
+                    className="max-h-[calc(100%-1.5rem)] w-auto max-w-full object-contain"
                     loading="lazy"
+                  />
+                  <NicknameTag
+                    nickname={match.top.nickname}
+                    className="mt-1 shrink-0 border-mono-200/80"
                   />
                 </div>
               )}
               <div className="h-px bg-mono-200 shrink-0" />
               {match.bottom && (
-                <div className="h-56 flex items-center justify-center p-4 product-stage">
+                <div className="h-56 flex flex-col items-center justify-center p-4 product-stage">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={resolveImageUrl(match.bottom.image_url)}
-                    alt={`Match ${index + 1} bottom`}
-                    className="max-h-full w-auto max-w-full object-contain"
+                    alt={
+                      match.bottom.nickname
+                        ? match.bottom.nickname
+                        : `Match ${index + 1} bottom`
+                    }
+                    className="max-h-[calc(100%-1.5rem)] w-auto max-w-full object-contain"
                     loading="lazy"
+                  />
+                  <NicknameTag
+                    nickname={match.bottom.nickname}
+                    className="mt-1 shrink-0 border-mono-200/80"
                   />
                 </div>
               )}

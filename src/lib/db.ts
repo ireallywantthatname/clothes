@@ -33,9 +33,18 @@ async function getDb(): Promise<DbClient> {
           image_url TEXT NOT NULL,
           category TEXT NOT NULL CHECK (category IN ('top', 'bottom')),
           status TEXT NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'unavailable')),
+          nickname TEXT,
           created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
       `);
+      // Existing local/remote DBs created before nickname — add column if missing
+      try {
+        await client.execute(
+          "ALTER TABLE clothes ADD COLUMN nickname TEXT",
+        );
+      } catch {
+        // Column already exists
+      }
       await client.execute(`
         CREATE TABLE IF NOT EXISTS matches (
           id TEXT PRIMARY KEY,
@@ -56,9 +65,8 @@ async function getDb(): Promise<DbClient> {
 }
 
 // Wrapper that delegates to the underlying client
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = {
-  async execute(...args: any[]) {
+  async execute(...args: Parameters<DbClient["execute"]>) {
     const client = await getDb();
     return client.execute(...args);
   },
