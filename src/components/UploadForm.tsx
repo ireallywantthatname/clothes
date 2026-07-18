@@ -3,8 +3,16 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { uploadClothing } from "@/app/actions";
-import { removeBackground, preloadBackgroundRemoval } from "@/lib/removeBackground";
-import type { ProgressCallback } from "@/lib/removeBackground";
+import {
+  removeBackground,
+  preloadBackgroundRemoval,
+  formatBgError,
+  subscribeBgPreloadStatus,
+} from "@/lib/removeBackground";
+import type {
+  ProgressCallback,
+  BgPreloadStatus,
+} from "@/lib/removeBackground";
 
 async function resizeImage(
   file: File,
@@ -82,11 +90,13 @@ export default function UploadForm() {
   }>({ type: "idle" });
   const [dragOver, setDragOver] = useState(false);
   const [removeBg, setRemoveBg] = useState(false);
-  const [preloadState, setPreloadState] = useState<{
-    phase: "idle" | "loading" | "ready";
-    progress: number;
-    label: string;
-  }>({ phase: "idle", progress: 0, label: "" });
+  const [preloadState, setPreloadState] = useState<BgPreloadStatus>({
+    phase: "idle",
+    progress: 0,
+    label: "",
+    device: null,
+    error: null,
+  });
   const [processingProgress, setProcessingProgress] = useState<{
     percent: number;
     label: string;
@@ -100,28 +110,32 @@ export default function UploadForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handlePreloadProgress: ProgressCallback = useCallback(
-    (key, current, total) => {
-      const percent = total > 0 ? Math.round((current / total) * 100) : 0;
-      setPreloadState({
-        phase: "loading",
-        progress: percent,
-        label: key,
-      });
-    },
-    [],
-  );
+  // Mirror shared preload status into local state for the progress UI
+  useEffect(() => {
+    return subscribeBgPreloadStatus(setPreloadState);
+  }, []);
 
   const handleToggleBgOn = useCallback(() => {
     setRemoveBg(true);
-    setPreloadState({ phase: "loading", progress: 0, label: "" });
-    preloadBackgroundRemoval(handlePreloadProgress);
-  }, [handlePreloadProgress]);
+    setStatus({ type: "idle" });
+    void preloadBackgroundRemoval().catch((err) => {
+      setStatus({
+        type: "error",
+        message: formatBgError(
+          err,
+          "Background model failed to load. Try again or turn it off.",
+        ),
+      });
+    });
+  }, []);
 
   const handleToggleBgOff = useCallback(() => {
     setRemoveBg(false);
-    setPreloadState({ phase: "idle", progress: 0, label: "" });
-  }, []);
+    // Keep shared preload cache; only clear form-level BG intent
+    if (status.type === "error") {
+      setStatus({ type: "idle" });
+    }
+  }, [status.type]);
 
   const handleFileChange = async (selectedFile: File | null) => {
     if (preview) URL.revokeObjectURL(preview);
@@ -169,30 +183,36 @@ export default function UploadForm() {
       formData.append("file", file);
       formData.append("category", category);
 
-      // Remove background if toggled on
+      // Remove background if toggled on — wait for model readiness, never silent-fail
       if (removeBg) {
         setStatus({ type: "processing" });
+        setProcessingProgress({ percent: 0, label: "" });
         try {
+          // Ensure model is ready (shared preload); surfaces timeout/load errors
+          await preloadBackgroundRemoval();
           // Re-resize for BG removal: smaller dimension + lossless PNG input
           const bgInput = await resizeImage(file, 800, "image/png");
-          const bgBlob = await removeBackground(
-            bgInput,
-            (key, current, total) => {
-              const percent =
-                total > 0 ? Math.round((current / total) * 100) : 0;
-              setProcessingProgress({ percent, label: key });
-            },
-          );
+          const progressCb: ProgressCallback = (key, current, total) => {
+            const percent =
+              total > 0 ? Math.round((current / total) * 100) : 0;
+            setProcessingProgress({ percent, label: key });
+          };
+          const bgBlob = await removeBackground(bgInput, {
+            onProgress: progressCb,
+          });
           const pngFile = new File(
             [bgBlob],
             file.name.replace(/\.[^.]+$/, "") + ".png",
             { type: "image/png" },
           );
           formData.set("file", pngFile);
-        } catch {
+        } catch (err) {
           setStatus({
             type: "error",
-            message: "Background removal failed. Try again or turn it off.",
+            message: formatBgError(
+              err,
+              "Background removal failed. Try again or turn it off.",
+            ),
           });
           isSubmitting.current = false;
           return;
@@ -400,11 +420,16 @@ export default function UploadForm() {
               OFF
             </button>
           </div>
-          {/* Model preload progress */}
-          {preloadState.phase === "loading" && (
+          {/* Model preload progress / ready / error */}
+          {removeBg && preloadState.phase === "loading" && (
             <div className="mt-2 w-full">
               <div className="flex justify-between text-xs text-mono-500 mb-1">
-                <span>LOADING MODEL</span>
+                <span>
+                  LOADING MODEL
+                  {preloadState.device
+                    ? ` (${preloadState.device.toUpperCase()})`
+                    : ""}
+                </span>
                 <span>{preloadState.progress}%</span>
               </div>
               <div className="w-full h-1 bg-mono-200">
@@ -415,8 +440,18 @@ export default function UploadForm() {
               </div>
             </div>
           )}
-          {preloadState.phase === "loading" && preloadState.progress === 100 && (
-            <p className="text-xs text-mono-500 mt-1">Model ready</p>
+          {removeBg && preloadState.phase === "ready" && (
+            <p className="text-xs text-mono-500 mt-1">
+              Model ready
+              {preloadState.device
+                ? ` · ${preloadState.device.toUpperCase()}`
+                : ""}
+            </p>
+          )}
+          {removeBg && preloadState.phase === "error" && preloadState.error && (
+            <p className="text-xs text-mono-900 mt-1 border border-mono-900 px-2 py-1">
+              {preloadState.error}
+            </p>
           )}
         </div>
       )}
