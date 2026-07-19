@@ -18,9 +18,10 @@
 }
 
 /*
-  Dark mode = dim fitting room, not pure black.
+  Dark mode = AMOLED black. Page is pure #000 so OLED pixels fully off;
+  surfaces step up in cool near-blacks only enough for hierarchy.
   Scale roles stay inverted-by-value: mono-0 is still "page", mono-900 still
-  "primary ink / button face". Garment cutouts stay readable on warm charcoal.
+  "primary ink / button face". Product stage stays lit paper so cutouts read.
 */
 :root {
   --grain-opacity: 0.035;
@@ -42,8 +43,8 @@
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --grain-opacity: 0.055;
-  --color-scrim: color-mix(in srgb, #000000 62%, transparent);
+  --grain-opacity: 0.04;
+  --color-scrim: color-mix(in srgb, #000000 72%, transparent);
   /* Soft warm paper — readable for dark clothes, not a pure-white blast */
   --color-stage: #e4e0d6;
   --color-stage-check: #d4cfc4;
@@ -51,39 +52,40 @@ html[data-theme="dark"] {
   --color-stage-ink-muted: #5c574f;
   --color-stage-ink-faint: #8a847a;
   --color-stage-ink-strong: #141210;
-  --color-mono-0: #121110;
-  --color-mono-50: #1a1917;
-  --color-mono-100: #252320;
-  --color-mono-200: #3a3732;
-  --color-mono-300: #5e5952;
-  --color-mono-500: #9a948a;
-  --color-mono-700: #c9c3b8;
-  --color-mono-800: #e3dfd6;
-  --color-mono-900: #f4f0e8;
-  --color-mono-950: #faf7f2;
+  /* AMOLED: pure black page, cool near-black surfaces, high-contrast ink */
+  --color-mono-0: #000000;
+  --color-mono-50: #0a0a0a;
+  --color-mono-100: #141414;
+  --color-mono-200: #262626;
+  --color-mono-300: #525252;
+  --color-mono-500: #a3a3a3;
+  --color-mono-700: #d4d4d4;
+  --color-mono-800: #e5e5e5;
+  --color-mono-900: #f5f5f5;
+  --color-mono-950: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   html[data-theme="system"] {
     color-scheme: dark;
-    --grain-opacity: 0.055;
-    --color-scrim: color-mix(in srgb, #000000 62%, transparent);
+    --grain-opacity: 0.04;
+    --color-scrim: color-mix(in srgb, #000000 72%, transparent);
     --color-stage: #e4e0d6;
     --color-stage-check: #d4cfc4;
     --color-stage-ink: #3d3a36;
     --color-stage-ink-muted: #5c574f;
     --color-stage-ink-faint: #8a847a;
     --color-stage-ink-strong: #141210;
-    --color-mono-0: #121110;
-    --color-mono-50: #1a1917;
-    --color-mono-100: #252320;
-    --color-mono-200: #3a3732;
-    --color-mono-300: #5e5952;
-    --color-mono-500: #9a948a;
-    --color-mono-700: #c9c3b8;
-    --color-mono-800: #e3dfd6;
-    --color-mono-900: #f4f0e8;
-    --color-mono-950: #faf7f2;
+    --color-mono-0: #000000;
+    --color-mono-50: #0a0a0a;
+    --color-mono-100: #141414;
+    --color-mono-200: #262626;
+    --color-mono-300: #525252;
+    --color-mono-500: #a3a3a3;
+    --color-mono-700: #d4d4d4;
+    --color-mono-800: #e5e5e5;
+    --color-mono-900: #f5f5f5;
+    --color-mono-950: #ffffff;
   }
 }
 
