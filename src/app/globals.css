@@ -21,23 +21,26 @@
   Dark mode = AMOLED black. Page is pure #000 so OLED pixels fully off;
   surfaces step up in cool near-blacks only enough for hierarchy.
   Scale roles stay inverted-by-value: mono-0 is still "page", mono-900 still
-  "primary ink / button face". Product stage stays lit paper so cutouts read.
+  "primary ink / button face". Product stage stays a lit cool studio so cutouts read.
 */
 :root {
   --grain-opacity: 0.035;
   /* Scrim stays charcoal in both modes (modal dim, not inverted ink) */
   --color-scrim: color-mix(in srgb, #0c0b0a 48%, transparent);
   /*
-    Product stage = lit pedestal. Stays paper-light even in dark mode so
-    navy, black, and charcoal garments keep silhouette and detail.
-    Stage ink stays dark with the stage (hang-tags live on the pedestal).
+    Product stage = cool studio softbox, not warm cream paper.
+    Mid-cool stone keeps white garments visible; a slightly lit center
+    keeps navy/black silhouettes sharp. Stage ink stays dark (hang-tags
+    live on the pedestal). Remains light in dark mode for the same reason.
   */
-  --color-stage: #f5f3f0;
-  --color-stage-check: #ebe8e4;
-  --color-stage-ink: #3d3a36;
-  --color-stage-ink-muted: #6b6560;
-  --color-stage-ink-faint: #b8b2a9;
-  --color-stage-ink-strong: #141210;
+  --color-stage: #e4e6ea;
+  --color-stage-lit: #f0f1f4;
+  --color-stage-shade: #d2d5db;
+  --color-stage-check: #d8dbe1;
+  --color-stage-ink: #3a3d44;
+  --color-stage-ink-muted: #5c6068;
+  --color-stage-ink-faint: #9aa0aa;
+  --color-stage-ink-strong: #14161a;
   color-scheme: light;
 }
 
@@ -45,13 +48,15 @@ html[data-theme="dark"] {
   color-scheme: dark;
   --grain-opacity: 0.04;
   --color-scrim: color-mix(in srgb, #000000 72%, transparent);
-  /* Soft warm paper — readable for dark clothes, not a pure-white blast */
-  --color-stage: #e4e0d6;
-  --color-stage-check: #d4cfc4;
-  --color-stage-ink: #3d3a36;
-  --color-stage-ink-muted: #5c574f;
-  --color-stage-ink-faint: #8a847a;
-  --color-stage-ink-strong: #141210;
+  /* Same cool studio pedestal — still lit so dark cutouts read on AMOLED */
+  --color-stage: #cfd2d8;
+  --color-stage-lit: #e2e4e8;
+  --color-stage-shade: #b8bcc4;
+  --color-stage-check: #c0c4cc;
+  --color-stage-ink: #3a3d44;
+  --color-stage-ink-muted: #555a63;
+  --color-stage-ink-faint: #7a808a;
+  --color-stage-ink-strong: #14161a;
   /* AMOLED: pure black page, cool near-black surfaces, high-contrast ink */
   --color-mono-0: #000000;
   --color-mono-50: #0a0a0a;
@@ -70,12 +75,14 @@ html[data-theme="dark"] {
     color-scheme: dark;
     --grain-opacity: 0.04;
     --color-scrim: color-mix(in srgb, #000000 72%, transparent);
-    --color-stage: #e4e0d6;
-    --color-stage-check: #d4cfc4;
-    --color-stage-ink: #3d3a36;
-    --color-stage-ink-muted: #5c574f;
-    --color-stage-ink-faint: #8a847a;
-    --color-stage-ink-strong: #141210;
+    --color-stage: #cfd2d8;
+    --color-stage-lit: #e2e4e8;
+    --color-stage-shade: #b8bcc4;
+    --color-stage-check: #c0c4cc;
+    --color-stage-ink: #3a3d44;
+    --color-stage-ink-muted: #555a63;
+    --color-stage-ink-faint: #7a808a;
+    --color-stage-ink-strong: #14161a;
     --color-mono-0: #000000;
     --color-mono-50: #0a0a0a;
     --color-mono-100: #141414;
@@ -368,20 +375,20 @@ body::before {
   border: 0;
 }
 
-/* Fashion product stage — lit pedestal + subtle checker for cutouts */
+/*
+  Fashion product stage — cool studio softbox.
+  Radial wash: brighter center for dark garments, cooler rim so white
+  pieces and cutout edges still separate from the field. No warm cream,
+  no loud transparency-checker.
+*/
 .product-stage {
   background-color: var(--color-stage);
-  background-image:
-    linear-gradient(45deg, var(--color-stage-check) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--color-stage-check) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--color-stage-check) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--color-stage-check) 75%);
-  background-size: 16px 16px;
-  background-position:
-    0 0,
-    0 8px,
-    8px -8px,
-    -8px 0;
+  background-image: radial-gradient(
+    ellipse 88% 78% at 50% 40%,
+    var(--color-stage-lit) 0%,
+    var(--color-stage) 48%,
+    var(--color-stage-shade) 100%
+  );
 }
 
 /* Overlay badge on garment photos (WASH, etc.) — stage-ink on stage paper */
