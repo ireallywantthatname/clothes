@@ -1,10 +1,26 @@
 import db from "@/lib/db";
 import HomeContent from "@/components/HomeContent";
+import PasscodeGate from "@/components/PasscodeGate";
+import { isPasscodeUnlocked } from "@/lib/passcode";
 import type { ClothingItem, Match } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const unlocked = await isPasscodeUnlocked();
+
+  // Locked: no DB reads — only the silhouette under the passcode overlay.
+  if (!unlocked) {
+    return (
+      <main
+        id="main"
+        className="flex-1 flex flex-col items-center px-4 pb-10 pt-1"
+      >
+        <PasscodeGate locked>{null}</PasscodeGate>
+      </main>
+    );
+  }
+
   const clothesResult = await db.execute(
     "SELECT * FROM clothes ORDER BY created_at DESC",
   );
@@ -37,7 +53,9 @@ export default async function HomePage() {
       id="main"
       className="flex-1 flex flex-col items-center px-4 pb-10 pt-1"
     >
-      <HomeContent tops={tops} bottoms={bottoms} matches={matches} />
+      <PasscodeGate locked={false}>
+        <HomeContent tops={tops} bottoms={bottoms} matches={matches} />
+      </PasscodeGate>
     </main>
   );
 }

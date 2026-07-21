@@ -25,7 +25,7 @@ export default function SaveMatchButton({ topId, bottomId }: Props) {
 
     const result = await saveMatch(topId, bottomId);
 
-    if (result.error) {
+    if ("error" in result) {
       setStatus({ type: "error", message: result.error });
       setTimeout(() => setStatus({ type: "idle" }), 2500);
     } else {

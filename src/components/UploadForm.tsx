@@ -220,7 +220,7 @@ export default function UploadForm() {
 
       const result = await uploadClothing(formData);
 
-      if (result.error) {
+      if ("error" in result) {
         setStatus({ type: "error", message: result.error });
       } else {
         setStatus({ type: "success", message: "Uploaded" });

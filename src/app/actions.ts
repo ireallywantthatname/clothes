@@ -4,9 +4,44 @@ import { revalidatePath } from "next/cache";
 import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
 import { put, del } from "@vercel/blob";
 import db from "@/lib/db";
+import {
+  isPasscodeUnlocked,
+  passcodesMatch,
+  setPasscodeUnlockedCookie,
+} from "@/lib/passcode";
 
 const UPLOADS_DIR = "data/uploads";
 const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
+
+async function requireUnlocked(): Promise<{ error: string } | null> {
+  if (!(await isPasscodeUnlocked())) {
+    return { error: "Unlock the closet first." };
+  }
+  return null;
+}
+
+export async function verifyPasscode(
+  code: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const expected = process.env.PASSCODE;
+  if (!expected) {
+    // Gate disabled — nothing to verify
+    return { ok: true };
+  }
+
+  const trimmed = typeof code === "string" ? code.trim() : "";
+  if (!trimmed) {
+    return { ok: false, error: "Enter the passcode." };
+  }
+
+  if (!passcodesMatch(trimmed, expected)) {
+    return { ok: false, error: "Wrong passcode." };
+  }
+
+  await setPasscodeUnlockedCookie();
+  return { ok: true };
+}
+
 
 async function storeFile(
   filename: string,
@@ -52,6 +87,9 @@ function normalizeNickname(raw: unknown): string | null {
 }
 
 export async function uploadClothing(formData: FormData) {
+  const locked = await requireUnlocked();
+  if (locked) return locked;
+
   const file = formData.get("file") as File | null;
   const category = formData.get("category") as string | null;
   const nickname = normalizeNickname(formData.get("nickname"));
@@ -97,6 +135,9 @@ export async function uploadClothing(formData: FormData) {
 }
 
 export async function updateNickname(itemId: string, nickname: string | null) {
+  const locked = await requireUnlocked();
+  if (locked) return locked;
+
   if (!itemId) return { error: "No item specified." };
 
   const normalized = normalizeNickname(nickname);
@@ -119,6 +160,9 @@ export async function updateNickname(itemId: string, nickname: string | null) {
 }
 
 export async function saveMatch(topId: string, bottomId: string) {
+  const locked = await requireUnlocked();
+  if (locked) return locked;
+
   if (!topId || !bottomId) {
     return { error: "Select a top and a bottom first." };
   }
@@ -163,6 +207,9 @@ export async function saveMatch(topId: string, bottomId: string) {
 }
 
 export async function deleteMatch(matchId: string) {
+  const locked = await requireUnlocked();
+  if (locked) return locked;
+
   if (!matchId) {
     return { error: "No match specified." };
   }
@@ -177,6 +224,9 @@ export async function deleteMatch(matchId: string) {
 }
 
 export async function toggleItemStatus(itemId: string) {
+  const locked = await requireUnlocked();
+  if (locked) return locked;
+
   if (!itemId) return { error: "No item specified." };
 
   const result = await db.execute({
@@ -202,6 +252,9 @@ export async function toggleItemStatus(itemId: string) {
 }
 
 export async function deleteClothingItem(itemId: string, imageUrl: string) {
+  const locked = await requireUnlocked();
+  if (locked) return locked;
+
   if (!itemId) return { error: "No item specified." };
 
   // Delete image file from storage
