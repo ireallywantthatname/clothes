@@ -75,7 +75,6 @@ export default function PasscodeOverlay() {
       role="dialog"
       aria-modal="true"
       aria-labelledby={`${formId}-title`}
-      aria-describedby={`${formId}-desc`}
     >
       <div
         className="absolute inset-0 dialog-scrim"
@@ -95,17 +94,10 @@ export default function PasscodeOverlay() {
 
         <h2
           id={`${formId}-title`}
-          className="font-mono text-sm tracking-[0.18em] text-mono-900 text-center mb-2 text-balance"
+          className="font-mono text-sm tracking-[0.18em] text-mono-900 text-center mb-6 text-balance"
         >
           ENTER CODE
         </h2>
-
-        <p
-          id={`${formId}-desc`}
-          className="text-xs text-mono-500 text-center leading-relaxed mb-6 text-pretty"
-        >
-          Open the closet to mix outfits.
-        </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
