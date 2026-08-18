@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import ClothesStrip from "./ClothesStrip";
-import SaveMatchButton from "./SaveMatchButton";
-import ConfirmDialog from "./ConfirmDialog";
+import { useState } from "react";
 import { usePasscode } from "@/lib/passcode";
 import type { ClothingItem } from "@/lib/types";
+import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import ClothesStrip from "./ClothesStrip";
+import ConfirmDialog from "./ConfirmDialog";
+import SaveMatchButton from "./SaveMatchButton";
 
 type Props = {
   tops: ClothingItem[];
@@ -83,10 +83,7 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
         autoScrollPaused={pendingDelete !== null}
       />
 
-      <SaveMatchButton
-        topId={selectedTopId}
-        bottomId={selectedBottomId}
-      />
+      <SaveMatchButton topId={selectedTopId} bottomId={selectedBottomId} />
 
       <ConfirmDialog
         open={pendingDelete !== null}

@@ -2,19 +2,23 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  THEME_LABELS,
   getServerThemeSnapshot,
   getThemeSnapshot,
   nextTheme,
   setTheme,
   subscribeTheme,
+  THEME_LABELS,
 } from "@/lib/theme";
 
 /**
  * Cycles DAY → NITE → AUTO. Same mono hang-tag voice as the rest of the UI.
  * Page colors never flash: a boot script sets data-theme before paint.
  */
-export default function ThemeToggle({ className = "" }: { className?: string }) {
+export default function ThemeToggle({
+  className = "",
+}: {
+  className?: string;
+}) {
   const theme = useSyncExternalStore(
     subscribeTheme,
     getThemeSnapshot,

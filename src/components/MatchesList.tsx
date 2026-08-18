@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
 import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import ConfirmDialog from "./ConfirmDialog";
-import NicknameTag from "./NicknameTag";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePasscode } from "@/lib/passcode";
 import type { Match } from "@/lib/types";
+import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import ConfirmDialog from "./ConfirmDialog";
+import NicknameTag from "./NicknameTag";
 
 type Props = {
   matches: Match[];
@@ -28,10 +28,11 @@ export default function MatchesList({ matches }: Props) {
     if (!container) return;
     setCanScrollLeft(container.scrollLeft > 1);
     setCanScrollRight(
-      container.scrollLeft < container.scrollWidth - container.clientWidth - 1
+      container.scrollLeft < container.scrollWidth - container.clientWidth - 1,
     );
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies(matches): remeasure when saved matches change
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -76,15 +77,11 @@ export default function MatchesList({ matches }: Props) {
       <div className="relative group">
         <div ref={containerRef} className="scroll-strip surface-frame">
           {matches.map((match, index) => (
-            <div
-              key={match.id}
-              className="scroll-card relative flex flex-col"
-            >
+            <div key={match.id} className="scroll-card relative flex flex-col">
               {match.top && (
                 <div className="h-56 flex flex-col items-center justify-center p-4 product-stage">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   {match.top.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                    // biome-ignore lint/performance/noImgElement: Convex storage URLs
                     <img
                       src={match.top.image_url}
                       alt={
@@ -105,9 +102,8 @@ export default function MatchesList({ matches }: Props) {
               <div className="h-px bg-mono-200 shrink-0" />
               {match.bottom && (
                 <div className="h-56 flex flex-col items-center justify-center p-4 product-stage">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   {match.bottom.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                    // biome-ignore lint/performance/noImgElement: Convex storage URLs
                     <img
                       src={match.bottom.image_url}
                       alt={

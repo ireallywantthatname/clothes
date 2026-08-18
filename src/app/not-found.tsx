@@ -16,10 +16,7 @@ export default function NotFound() {
             That route is not in the closet. Head back and keep mixing.
           </p>
         </div>
-        <Link
-          href="/"
-          className="btn-primary px-6 py-3 text-sm tracking-wider"
-        >
+        <Link href="/" className="btn-primary px-6 py-3 text-sm tracking-wider">
           BACK HOME
         </Link>
       </div>

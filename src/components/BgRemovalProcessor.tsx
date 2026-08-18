@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useEffect, useRef, useState } from "react";
 import { usePasscode } from "@/lib/passcode";
-import { resizeImage } from "@/lib/resizeImage";
 import { takePendingBgFile } from "@/lib/pendingBgFiles";
 import {
   preloadBackgroundRemoval,
   removeBackground,
 } from "@/lib/removeBackground";
+import { resizeImage } from "@/lib/resizeImage";
+import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
 const inFlight = new Set<string>();
@@ -46,6 +46,7 @@ export default function BgRemovalProcessor() {
     failBgRemovalRef.current = failBgRemoval;
   }, [generateUploadUrl, replaceImage, failBgRemoval]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies(queueTick): advance the queue after each item finishes
   useEffect(() => {
     if (passcode === null || pending === undefined) return;
 

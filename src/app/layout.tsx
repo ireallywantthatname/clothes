@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, DM_Mono } from "next/font/google";
-import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { DM_Mono, Geist } from "next/font/google";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,7 +21,8 @@ export const metadata: Metadata = {
     "Upload pieces from your wardrobe, scroll to pair tops and bottoms, and save outfits that work.",
   openGraph: {
     title: "clothes",
-    description: "Upload pieces from your wardrobe, scroll to pair tops and bottoms, and save outfits that work.",
+    description:
+      "Upload pieces from your wardrobe, scroll to pair tops and bottoms, and save outfits that work.",
     type: "website",
   },
 };
@@ -39,9 +40,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${dmMono.variable} h-full antialiased`}
     >
       <head>
-        <script
-          dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
-        />
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static theme boot script */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col bg-mono-0 text-mono-800 font-sans">
         <ConvexClientProvider>

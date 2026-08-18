@@ -80,7 +80,10 @@ export default function ConfirmDialog({
       <div className="relative w-full max-w-xs bg-mono-0 border-2 border-mono-900 p-8 opacity-0 animate-dialog-in shadow-[4px_4px_0_0_color-mix(in_srgb,var(--color-mono-900)_18%,transparent)]">
         <div className="flex justify-center mb-6">
           <div className="w-10 h-10 border-2 border-mono-900 flex items-center justify-center">
-            <span className="font-mono text-lg text-mono-900" aria-hidden="true">
+            <span
+              className="font-mono text-lg text-mono-900"
+              aria-hidden="true"
+            >
               !
             </span>
           </div>

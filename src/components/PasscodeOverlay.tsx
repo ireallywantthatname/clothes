@@ -1,15 +1,15 @@
 "use client";
 
 import {
+  type FormEvent,
   useEffect,
   useId,
   useRef,
   useState,
   useTransition,
-  type FormEvent,
 } from "react";
-import { markJustUnlocked } from "./ContentReveal";
 import { usePasscode } from "@/lib/passcode";
+import { markJustUnlocked } from "./ContentReveal";
 
 type Status = "idle" | "error" | "unlocking";
 
@@ -69,10 +69,7 @@ export default function PasscodeOverlay() {
       aria-modal="true"
       aria-labelledby={`${formId}-title`}
     >
-      <div
-        className="absolute inset-0 dialog-scrim"
-        aria-hidden="true"
-      />
+      <div className="absolute inset-0 dialog-scrim" aria-hidden="true" />
 
       <div
         className={`relative w-full max-w-[17rem] bg-mono-0 border-2 border-mono-900 p-7 shadow-[4px_4px_0_0_color-mix(in_srgb,var(--color-mono-900)_18%,transparent)] ${
@@ -81,9 +78,7 @@ export default function PasscodeOverlay() {
             : "animate-dialog-in opacity-0"
         } ${shake ? "passcode-shake" : ""}`}
       >
-        <p className="label-caps text-center mb-3 tracking-[0.22em]">
-          Locked
-        </p>
+        <p className="label-caps text-center mb-3 tracking-[0.22em]">Locked</p>
 
         <h2
           id={`${formId}-title`}

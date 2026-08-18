@@ -296,7 +296,8 @@ body::before {
   max-width: 14rem;
   margin-inline: auto;
   padding: 0.5rem 0.65rem 0.4rem;
-  border-top: 1px solid color-mix(in srgb, var(--color-stage-ink) 18%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--color-stage-ink) 18%, transparent);
   font-family: var(--font-mono);
   font-size: 0.875rem;
   letter-spacing: 0.1em;
@@ -324,7 +325,11 @@ body::before {
 
 .nickname-tag-button:hover {
   color: var(--color-stage-ink-strong);
-  background-color: color-mix(in srgb, var(--color-stage-check) 70%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--color-stage-check) 70%,
+    transparent
+  );
 }
 
 .nickname-tag-empty {
@@ -438,7 +443,8 @@ body::before {
     opacity 200ms ease,
     background-color 200ms ease,
     transform 150ms ease;
-  box-shadow: 2px 2px 0 color-mix(in srgb, var(--color-mono-900) 8%, transparent);
+  box-shadow: 2px 2px 0
+    color-mix(in srgb, var(--color-mono-900) 8%, transparent);
 }
 
 .scroll-nav:hover {
@@ -630,7 +636,11 @@ body::before {
 }
 
 .skeleton-block-stage {
-  background-color: color-mix(in srgb, var(--color-stage-check) 80%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--color-stage-check) 80%,
+    transparent
+  );
   animation: skeleton-pulse 1.9s ease-in-out infinite;
 }
 

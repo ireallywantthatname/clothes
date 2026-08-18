@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { useQuery } from "convex/react";
+import Link from "next/link";
+import { useState } from "react";
+import { usePasscode } from "@/lib/passcode";
 import { api } from "../../convex/_generated/api";
 import ClothesSlotMachine from "./ClothesSlotMachine";
+import HomeSkeleton from "./HomeSkeleton";
 import MatchesList from "./MatchesList";
 import ThemeToggle from "./ThemeToggle";
-import HomeSkeleton from "./HomeSkeleton";
-import { usePasscode } from "@/lib/passcode";
 
 export default function HomeContent() {
   const { passcode } = usePasscode();

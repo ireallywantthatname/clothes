@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { usePasscode } from "@/lib/passcode";
-import type { Id } from "../../convex/_generated/dataModel";
-import { resizeImage } from "@/lib/resizeImage";
 import { stashPendingBgFile } from "@/lib/pendingBgFiles";
+import { resizeImage } from "@/lib/resizeImage";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import ThemeToggle from "./ThemeToggle";
 
 export default function UploadForm() {
@@ -28,17 +28,17 @@ export default function UploadForm() {
   }>({ type: "idle" });
   const [dragOver, setDragOver] = useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies(preview): revoke the mount-time object URL only
   useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFileChange = async (selectedFile: File | null) => {
     if (preview) URL.revokeObjectURL(preview);
 
-    if (selectedFile && selectedFile.type.startsWith("image/")) {
+    if (selectedFile?.type.startsWith("image/")) {
       try {
         const resized = await resizeImage(selectedFile, 1024);
         setFile(resized);
@@ -166,6 +166,7 @@ export default function UploadForm() {
       </div>
 
       {/* Drop zone */}
+      {/* biome-ignore lint/a11y/useSemanticElements: drop zone also contains a remove control */}
       <div
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -191,7 +192,7 @@ export default function UploadForm() {
       >
         {preview ? (
           <div className="relative h-full w-full flex items-center justify-center p-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* biome-ignore lint/performance/noImgElement: local object-URL preview */}
             <img
               src={preview}
               alt="Selected clothing preview"

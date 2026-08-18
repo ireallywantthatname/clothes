@@ -1,15 +1,15 @@
 "use client";
 
+import { useConvex } from "convex/react";
 import {
   createContext,
   createElement,
+  type ReactNode,
   useContext,
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from "react";
-import { useConvex } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 const STORAGE_KEY = "clothes-unlocked";

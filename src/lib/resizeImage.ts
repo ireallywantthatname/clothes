@@ -11,7 +11,10 @@ export async function resizeImage(
     img.onload = () => {
       URL.revokeObjectURL(url);
 
-      if (img.naturalWidth <= maxDimension && img.naturalHeight <= maxDimension) {
+      if (
+        img.naturalWidth <= maxDimension &&
+        img.naturalHeight <= maxDimension
+      ) {
         resolve(file);
         return;
       }
@@ -42,7 +45,7 @@ export async function resizeImage(
             return;
           }
           const ext = format === "image/png" ? "png" : "jpg";
-          const name = file.name.replace(/\.[^.]+$/, "") + "." + ext;
+          const name = `${file.name.replace(/\.[^.]+$/, "")}.${ext}`;
           resolve(new File([blob], name, { type: format }));
         },
         format,

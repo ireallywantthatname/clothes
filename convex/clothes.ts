@@ -1,6 +1,11 @@
 import { v } from "convex/values";
-import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
+import {
+  type MutationCtx,
+  mutation,
+  type QueryCtx,
+  query,
+} from "./_generated/server";
 import { requirePasscode } from "./passcode";
 
 const NICKNAME_MAX = 40;
@@ -116,7 +121,10 @@ export const updateNickname = mutation({
     nickname: v.union(v.string(), v.null()),
   },
   returns: v.union(
-    v.object({ success: v.literal(true), nickname: v.union(v.string(), v.null()) }),
+    v.object({
+      success: v.literal(true),
+      nickname: v.union(v.string(), v.null()),
+    }),
     v.object({ error: v.string() }),
   ),
   handler: async (ctx, args) => {

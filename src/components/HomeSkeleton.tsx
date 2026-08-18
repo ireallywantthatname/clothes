@@ -4,11 +4,7 @@
  */
 export default function HomeSkeleton() {
   return (
-    <div
-      className="w-full max-w-lg mx-auto"
-      aria-hidden="true"
-      data-skeleton
-    >
+    <div className="w-full max-w-lg mx-auto" aria-hidden="true" data-skeleton>
       <header className="sticky top-0 z-10 bg-mono-0/95 backdrop-blur-sm pt-4 -mt-1">
         <div className="flex items-end justify-between w-full border-b border-mono-200 pb-4">
           <div className="flex flex-col gap-1">

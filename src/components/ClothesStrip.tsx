@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
   type FocusEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 import type { ClothingItem } from "@/lib/types";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -25,7 +25,10 @@ type Props = {
   onSelect: (id: Id<"clothes"> | null) => void;
   onToggleStatus: (id: Id<"clothes">) => void;
   onDelete: (id: Id<"clothes">) => void;
-  onNicknameChange: (id: Id<"clothes">, nickname: string | null) => Promise<void>;
+  onNicknameChange: (
+    id: Id<"clothes">,
+    nickname: string | null,
+  ) => Promise<void>;
   /**
    * Idle carousel direction. Tops and bottoms should use opposite values
    * so the racks counter-scroll when left alone.
@@ -65,8 +68,7 @@ export default function ClothesStrip({
   const programmaticScrollRef = useRef(false);
 
   const label = category === "top" ? "Tops" : "Bottoms";
-  const emptyMessage =
-    category === "top" ? "No tops yet" : "No bottoms yet";
+  const emptyMessage = category === "top" ? "No tops yet" : "No bottoms yet";
 
   const onSelectRef = useRef(onSelect);
 
@@ -83,7 +85,8 @@ export default function ClothesStrip({
   }, []);
 
   useEffect(() => {
-    const onVisibility = () => setPageVisible(document.visibilityState === "visible");
+    const onVisibility = () =>
+      setPageVisible(document.visibilityState === "visible");
     onVisibility();
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
@@ -98,9 +101,9 @@ export default function ClothesStrip({
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            const id = entry.target.getAttribute("data-clothes-id") as
-              | Id<"clothes">
-              | null;
+            const id = entry.target.getAttribute(
+              "data-clothes-id",
+            ) as Id<"clothes"> | null;
             const status = entry.target.getAttribute("data-clothes-status");
             if (id && status === "available") onSelectRef.current(id);
           }
@@ -109,10 +112,12 @@ export default function ClothesStrip({
       {
         root: container,
         threshold: [0.6],
-      }
+      },
     );
 
-    cardRefs.current.forEach((el) => observer.observe(el));
+    for (const el of cardRefs.current.values()) {
+      observer.observe(el);
+    }
 
     if (items.length === 1 && items[0].status === "available") {
       onSelectRef.current(items[0].id);
@@ -126,7 +131,7 @@ export default function ClothesStrip({
     if (!container) return;
     setCanScrollLeft(container.scrollLeft > 1);
     setCanScrollRight(
-      container.scrollLeft < container.scrollWidth - container.clientWidth - 1
+      container.scrollLeft < container.scrollWidth - container.clientWidth - 1,
     );
   }, []);
 
@@ -174,6 +179,7 @@ export default function ClothesStrip({
     [getCardWidth, items.length, updateScrollState],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies(items): remeasure when the closet list changes
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -188,15 +194,13 @@ export default function ClothesStrip({
     return () => container.removeEventListener("scroll", onScroll);
   }, [updateScrollState, markUserScroll, items]);
 
-  // Counter-scroll racks start at opposite ends of the closet.
+  // biome-ignore lint/correctness/useExhaustiveDependencies(scrollToIndex): remount on direction or length only
   useEffect(() => {
     if (autoScrollDirection !== "backward" || items.length < 2) return;
     const id = window.requestAnimationFrame(() => {
       scrollToIndex(items.length - 1, "auto");
     });
     return () => window.cancelAnimationFrame(id);
-    // Only on mount / direction or length change — not every scrollToIndex identity flip
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoScrollDirection, items.length]);
 
   useEffect(() => {
@@ -335,10 +339,10 @@ export default function ClothesStrip({
         onFocusCapture={onFocusCapture}
         onBlurCapture={onBlurCapture}
       >
-        <div
+        <section
           ref={containerRef}
           className="scroll-strip surface-frame product-stage"
-          aria-roledescription="carousel"
+          aria-label={`${label} carousel`}
         >
           {items.map((item, index) => (
             <div
@@ -358,9 +362,8 @@ export default function ClothesStrip({
                 }`}
               >
                 <div className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   {item.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                    // biome-ignore lint/performance/noImgElement: Convex storage URLs
                     <img
                       key={item.image_url}
                       src={item.image_url}
@@ -451,7 +454,7 @@ export default function ClothesStrip({
               </div>
             </div>
           ))}
-        </div>
+        </section>
 
         {canScrollLeft && (
           <button

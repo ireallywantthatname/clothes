@@ -1,9 +1,9 @@
 "use client";
 
+import { usePasscode } from "@/lib/passcode";
+import ContentReveal from "./ContentReveal";
 import HomeSkeleton from "./HomeSkeleton";
 import PasscodeOverlay from "./PasscodeOverlay";
-import ContentReveal from "./ContentReveal";
-import { usePasscode } from "@/lib/passcode";
 
 type Props = {
   children: React.ReactNode;
