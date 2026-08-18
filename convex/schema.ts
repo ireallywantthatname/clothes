@@ -7,7 +7,12 @@ export default defineSchema({
     category: v.union(v.literal("top"), v.literal("bottom")),
     status: v.union(v.literal("available"), v.literal("unavailable")),
     nickname: v.union(v.string(), v.null()),
-  }).index("by_category", ["category"]),
+    bgStatus: v.optional(
+      v.union(v.literal("pending"), v.literal("done"), v.literal("failed")),
+    ),
+  })
+    .index("by_category", ["category"])
+    .index("by_bgStatus", ["bgStatus"]),
   matches: defineTable({
     topId: v.id("clothes"),
     bottomId: v.id("clothes"),

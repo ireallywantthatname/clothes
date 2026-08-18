@@ -5,6 +5,13 @@ import { requirePasscode } from "./passcode";
 
 const NICKNAME_MAX = 40;
 const LIST_LIMIT = 200;
+const PENDING_BG_LIMIT = 20;
+
+const bgStatusValidator = v.union(
+  v.literal("pending"),
+  v.literal("done"),
+  v.literal("failed"),
+);
 
 export const clothingItemValidator = v.object({
   id: v.id("clothes"),
@@ -12,6 +19,7 @@ export const clothingItemValidator = v.object({
   category: v.union(v.literal("top"), v.literal("bottom")),
   status: v.union(v.literal("available"), v.literal("unavailable")),
   nickname: v.union(v.string(), v.null()),
+  bgStatus: v.union(bgStatusValidator, v.null()),
 });
 
 export function normalizeNickname(raw: unknown): string | null {
@@ -31,6 +39,7 @@ export async function toClothingItem(
     category: doc.category,
     status: doc.status,
     nickname: doc.nickname,
+    bgStatus: doc.bgStatus ?? null,
   };
 }
 
@@ -90,6 +99,7 @@ export const create = mutation({
         category: args.category,
         status: "available",
         nickname: normalizeNickname(args.nickname),
+        bgStatus: "pending",
       });
     } catch (e: unknown) {
       await ctx.storage.delete(args.storageId);
@@ -168,6 +178,76 @@ export const remove = mutation({
     }
     await ctx.storage.delete(item.storageId);
     await ctx.db.delete("clothes", args.itemId);
+    return { success: true as const };
+  },
+});
+
+export const listPendingBg = query({
+  args: { passcode: v.string() },
+  returns: v.array(
+    v.object({
+      id: v.id("clothes"),
+      image_url: v.union(v.string(), v.null()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    requirePasscode(args.passcode);
+    const docs = await ctx.db
+      .query("clothes")
+      .withIndex("by_bgStatus", (q) => q.eq("bgStatus", "pending"))
+      .take(PENDING_BG_LIMIT);
+    return await Promise.all(
+      docs.map(async (doc) => ({
+        id: doc._id,
+        image_url: await ctx.storage.getUrl(doc.storageId),
+      })),
+    );
+  },
+});
+
+export const replaceImage = mutation({
+  args: {
+    passcode: v.string(),
+    itemId: v.id("clothes"),
+    storageId: v.id("_storage"),
+  },
+  returns: v.union(
+    v.object({ success: v.literal(true) }),
+    v.object({ error: v.string() }),
+  ),
+  handler: async (ctx, args) => {
+    requirePasscode(args.passcode);
+    const item = await ctx.db.get("clothes", args.itemId);
+    if (!item) {
+      await ctx.storage.delete(args.storageId);
+      return { error: "Item not found." };
+    }
+    const previousStorageId = item.storageId;
+    await ctx.db.patch("clothes", args.itemId, {
+      storageId: args.storageId,
+      bgStatus: "done",
+    });
+    if (previousStorageId !== args.storageId) {
+      await ctx.storage.delete(previousStorageId);
+    }
+    return { success: true as const };
+  },
+});
+
+export const failBgRemoval = mutation({
+  args: {
+    passcode: v.string(),
+    itemId: v.id("clothes"),
+  },
+  returns: v.union(
+    v.object({ success: v.literal(true) }),
+    v.object({ error: v.string() }),
+  ),
+  handler: async (ctx, args) => {
+    requirePasscode(args.passcode);
+    const item = await ctx.db.get("clothes", args.itemId);
+    if (!item) return { error: "Item not found." };
+    await ctx.db.patch("clothes", args.itemId, { bgStatus: "failed" });
     return { success: true as const };
   },
 });
