@@ -1,23 +1,27 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import ConfirmDialog from "./ConfirmDialog";
 import NicknameTag from "./NicknameTag";
-import { deleteMatch } from "@/app/actions";
+import { usePasscode } from "@/lib/passcode";
 import type { Match } from "@/lib/types";
-import { resolveImageUrl } from "@/lib/imageUrl";
+import type { Id } from "../../convex/_generated/dataModel";
 
 type Props = {
   matches: Match[];
 };
 
 export default function MatchesList({ matches }: Props) {
-  const router = useRouter();
+  const { passcode } = usePasscode();
+  const deleteMatch = useMutation(api.matches.remove);
   const containerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Id<"matches"> | null>(
+    null,
+  );
 
   const updateScrollState = useCallback(() => {
     const container = containerRef.current;
@@ -79,16 +83,19 @@ export default function MatchesList({ matches }: Props) {
               {match.top && (
                 <div className="h-56 flex flex-col items-center justify-center p-4 product-stage">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={resolveImageUrl(match.top.image_url)}
-                    alt={
-                      match.top.nickname
-                        ? match.top.nickname
-                        : `Match ${index + 1} top`
-                    }
-                    className="max-h-[calc(100%-1.5rem)] w-auto max-w-full object-contain"
-                    loading="lazy"
-                  />
+                  {match.top.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={match.top.image_url}
+                      alt={
+                        match.top.nickname
+                          ? match.top.nickname
+                          : `Match ${index + 1} top`
+                      }
+                      className="max-h-[calc(100%-1.5rem)] w-auto max-w-full object-contain"
+                      loading="lazy"
+                    />
+                  ) : null}
                   <NicknameTag
                     nickname={match.top.nickname}
                     className="mt-1 shrink-0"
@@ -99,16 +106,19 @@ export default function MatchesList({ matches }: Props) {
               {match.bottom && (
                 <div className="h-56 flex flex-col items-center justify-center p-4 product-stage">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={resolveImageUrl(match.bottom.image_url)}
-                    alt={
-                      match.bottom.nickname
-                        ? match.bottom.nickname
-                        : `Match ${index + 1} bottom`
-                    }
-                    className="max-h-[calc(100%-1.5rem)] w-auto max-w-full object-contain"
-                    loading="lazy"
-                  />
+                  {match.bottom.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={match.bottom.image_url}
+                      alt={
+                        match.bottom.nickname
+                          ? match.bottom.nickname
+                          : `Match ${index + 1} bottom`
+                      }
+                      className="max-h-[calc(100%-1.5rem)] w-auto max-w-full object-contain"
+                      loading="lazy"
+                    />
+                  ) : null}
                   <NicknameTag
                     nickname={match.bottom.nickname}
                     className="mt-1 shrink-0"
@@ -189,9 +199,8 @@ export default function MatchesList({ matches }: Props) {
         message="This outfit combination will be removed from your saved matches."
         confirmLabel="REMOVE"
         onConfirm={async () => {
-          if (!pendingDelete) return;
-          await deleteMatch(pendingDelete);
-          router.refresh();
+          if (!pendingDelete || passcode === null) return;
+          await deleteMatch({ passcode, matchId: pendingDelete });
           setPendingDelete(null);
         }}
         onCancel={() => setPendingDelete(null)}

@@ -8,7 +8,7 @@ import {
   type FocusEvent,
 } from "react";
 import type { ClothingItem } from "@/lib/types";
-import { resolveImageUrl } from "@/lib/imageUrl";
+import type { Id } from "../../convex/_generated/dataModel";
 import NicknameTag from "./NicknameTag";
 
 /** Dwell time on each piece while auto-scrolling (idle carousel). */
@@ -21,11 +21,11 @@ type AutoScrollDirection = "forward" | "backward";
 type Props = {
   items: ClothingItem[];
   category: "top" | "bottom";
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
-  onToggleStatus: (id: string) => void;
-  onDelete: (id: string, imageUrl: string) => void;
-  onNicknameChange: (id: string, nickname: string | null) => Promise<void>;
+  selectedId: Id<"clothes"> | null;
+  onSelect: (id: Id<"clothes"> | null) => void;
+  onToggleStatus: (id: Id<"clothes">) => void;
+  onDelete: (id: Id<"clothes">) => void;
+  onNicknameChange: (id: Id<"clothes">, nickname: string | null) => Promise<void>;
   /**
    * Idle carousel direction. Tops and bottoms should use opposite values
    * so the racks counter-scroll when left alone.
@@ -98,7 +98,9 @@ export default function ClothesStrip({
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            const id = entry.target.getAttribute("data-clothes-id");
+            const id = entry.target.getAttribute("data-clothes-id") as
+              | Id<"clothes">
+              | null;
             const status = entry.target.getAttribute("data-clothes-status");
             if (id && status === "available") onSelectRef.current(id);
           }
@@ -357,28 +359,31 @@ export default function ClothesStrip({
               >
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={resolveImageUrl(item.image_url)}
-                    alt={
-                      item.nickname
-                        ? `${item.nickname}${
-                            item.status === "unavailable"
-                              ? ", marked as laundry"
-                              : ""
-                          }`
-                        : `${category} item ${index + 1}${
-                            item.status === "unavailable"
-                              ? ", marked as laundry"
-                              : ""
-                          }`
-                    }
-                    className={`h-64 w-auto max-w-full object-contain transition-all duration-300 ${
-                      item.status === "unavailable"
-                        ? "opacity-30 grayscale"
-                        : ""
-                    }`}
-                    loading="lazy"
-                  />
+                  {item.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.image_url}
+                      alt={
+                        item.nickname
+                          ? `${item.nickname}${
+                              item.status === "unavailable"
+                                ? ", marked as laundry"
+                                : ""
+                            }`
+                          : `${category} item ${index + 1}${
+                              item.status === "unavailable"
+                                ? ", marked as laundry"
+                                : ""
+                            }`
+                      }
+                      className={`h-64 w-auto max-w-full object-contain transition-all duration-300 ${
+                        item.status === "unavailable"
+                          ? "opacity-30 grayscale"
+                          : ""
+                      }`}
+                      loading="lazy"
+                    />
+                  ) : null}
 
                   {item.status === "unavailable" && (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -390,7 +395,7 @@ export default function ClothesStrip({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDelete(item.id, item.image_url);
+                      onDelete(item.id);
                     }}
                     className="card-action touch-visible top-0 right-0 w-7 border-l border-b"
                     aria-label={

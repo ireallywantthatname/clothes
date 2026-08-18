@@ -1,16 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { saveMatch } from "@/app/actions";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { usePasscode } from "@/lib/passcode";
+import type { Id } from "../../convex/_generated/dataModel";
 
 type Props = {
-  topId: string | null;
-  bottomId: string | null;
+  topId: Id<"clothes"> | null;
+  bottomId: Id<"clothes"> | null;
 };
 
 export default function SaveMatchButton({ topId, bottomId }: Props) {
-  const router = useRouter();
+  const { passcode } = usePasscode();
+  const saveMatch = useMutation(api.matches.save);
   const [status, setStatus] = useState<{
     type: "idle" | "loading" | "success" | "error";
     message?: string;
@@ -19,18 +22,17 @@ export default function SaveMatchButton({ topId, bottomId }: Props) {
   const disabled = !topId || !bottomId || status.type === "loading";
 
   const handleSave = async () => {
-    if (!topId || !bottomId) return;
+    if (!topId || !bottomId || passcode === null) return;
 
     setStatus({ type: "loading" });
 
-    const result = await saveMatch(topId, bottomId);
+    const result = await saveMatch({ passcode, topId, bottomId });
 
     if ("error" in result) {
       setStatus({ type: "error", message: result.error });
       setTimeout(() => setStatus({ type: "idle" }), 2500);
     } else {
       setStatus({ type: "success", message: "Match saved" });
-      router.refresh();
       setTimeout(() => setStatus({ type: "idle" }), 2000);
     }
   };

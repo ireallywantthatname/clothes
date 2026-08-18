@@ -8,13 +8,21 @@
  * @module
  */
 
+import type * as clothes from "../clothes.js";
+import type * as matches from "../matches.js";
+import type * as passcode from "../passcode.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{}>;
+declare const fullApi: ApiFromModules<{
+  clothes: typeof clothes;
+  matches: typeof matches;
+  passcode: typeof passcode;
+}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.

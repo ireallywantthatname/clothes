@@ -2,19 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import ClothesSlotMachine from "./ClothesSlotMachine";
 import MatchesList from "./MatchesList";
 import ThemeToggle from "./ThemeToggle";
-import type { ClothingItem, Match } from "@/lib/types";
+import HomeSkeleton from "./HomeSkeleton";
+import { usePasscode } from "@/lib/passcode";
 
-type Props = {
-  tops: ClothingItem[];
-  bottoms: ClothingItem[];
-  matches: Match[];
-};
-
-export default function HomeContent({ tops, bottoms, matches }: Props) {
+export default function HomeContent() {
+  const { passcode } = usePasscode();
+  const clothes = useQuery(
+    api.clothes.list,
+    passcode === null ? "skip" : { passcode },
+  );
+  const matches = useQuery(
+    api.matches.list,
+    passcode === null ? "skip" : { passcode },
+  );
   const [tab, setTab] = useState<"mix" | "saved">("mix");
+
+  if (clothes === undefined || matches === undefined) {
+    return <HomeSkeleton />;
+  }
+
+  const { tops, bottoms } = clothes;
   const hasItems = tops.length > 0 || bottoms.length > 0;
 
   return (

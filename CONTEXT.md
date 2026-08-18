@@ -7,13 +7,13 @@ This is a Next.js web application designed as a personal closet management and o
 - **Framework**: Next.js (App Router, version 16.2.9)
 - **Runtime & Package Manager**: Bun
 - **Styling**: Tailwind CSS v4
-- **Database**: LibSQL (SQLite) via `@libsql/client`. Supports local file-based database (`data/clothes.db`) and remote Turso database.
-- **Storage**: Vercel Blob (remote) with local filesystem fallback (`data/uploads`).
+- **Backend**: Convex (database + file storage).
+- **Storage**: Convex file storage. Clothing photos are stored as `Id<"_storage">` and served via `ctx.storage.getUrl`.
 - **Additional Features**: Background removal utilizing `@imgly/background-removal` and `onnxruntime-web`.
 
 ## Core Features
 
-- **Passcode Protection**: The app can be secured via a simple passcode gate controlled by the `PASSCODE` environment variable.
+- **Passcode Protection**: The app can be secured via a simple passcode gate controlled by the Convex `PASSCODE` environment variable.
 - **Closet Management**:
   - Upload images of clothing items categorized as `top` or `bottom`.
   - Assign optional personal nicknames to items.
@@ -27,13 +27,14 @@ This is a Next.js web application designed as a personal closet management and o
 ## Data Model
 
 - **`clothes`**: Stores individual clothing items.
-  - Fields: `id`, `image_url`, `category` (top/bottom), `status` (available/unavailable), `nickname`, `created_at`.
+  - Fields: `storageId`, `category` (top/bottom), `status` (available/unavailable), `nickname`.
 - **`matches`**: Stores saved outfit pairings.
-  - Fields: `id`, `top_id` (references clothes.id), `bottom_id` (references clothes.id), `created_at`.
-  - Includes a `UNIQUE(top_id, bottom_id)` constraint to prevent duplicate saved matches.
+  - Fields: `topId`, `bottomId`.
+  - Duplicate pairs are rejected in the save mutation via the `by_topId_and_bottomId` index.
 
 ## Key Directories & Files
 
-- `src/app`: Contains the Next.js pages, layouts, and server actions (`actions.ts`).
+- `convex`: Schema, passcode check, clothes and matches queries/mutations.
+- `src/app`: Next.js pages and layouts.
 - `src/components`: UI components including `ClothesSlotMachine`, `ClothesStrip`, `UploadForm`, and `MatchesList`.
-- `src/lib`: Core logic, database setup (`db.ts`), background removal logic, and type definitions (`types.ts`).
+- `src/lib`: Passcode client store, background removal logic, and type definitions (`types.ts`).

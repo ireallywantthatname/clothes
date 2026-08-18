@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, DM_Mono } from "next/font/google";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,10 +44,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-mono-0 text-mono-800 font-sans">
-        <a href="#main" className="skip-link">
-          Skip to content
-        </a>
-        {children}
+        <ConvexClientProvider>
+          <a href="#main" className="skip-link">
+            Skip to content
+          </a>
+          {children}
+        </ConvexClientProvider>
       </body>
     </html>
   );

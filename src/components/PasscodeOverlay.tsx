@@ -8,18 +8,13 @@ import {
   useTransition,
   type FormEvent,
 } from "react";
-import { useRouter } from "next/navigation";
-import { verifyPasscode } from "@/app/actions";
 import { markJustUnlocked } from "./ContentReveal";
+import { usePasscode } from "@/lib/passcode";
 
 type Status = "idle" | "error" | "unlocking";
 
-/**
- * Minimal hang-tag code entry over the locked closet silhouette.
- * Verifies server-side; on success fades out and refreshes so data can load.
- */
 export default function PasscodeOverlay() {
-  const router = useRouter();
+  const { unlock, reveal } = usePasscode();
   const inputRef = useRef<HTMLInputElement>(null);
   const formId = useId();
   const errorId = useId();
@@ -30,7 +25,6 @@ export default function PasscodeOverlay() {
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
-    // Focus after paint so the keyboard opens on mobile cleanly
     const t = window.setTimeout(() => inputRef.current?.focus(), 80);
     document.body.style.overflow = "hidden";
     return () => {
@@ -49,7 +43,7 @@ export default function PasscodeOverlay() {
     setStatus("idle");
 
     startTransition(async () => {
-      const result = await verifyPasscode(code);
+      const result = await unlock(code);
       if (!result.ok) {
         setError(result.error);
         setStatus("error");
@@ -61,9 +55,8 @@ export default function PasscodeOverlay() {
 
       setStatus("unlocking");
       markJustUnlocked();
-      // Let the overlay exit animation run before swapping to live data
       await new Promise((r) => window.setTimeout(r, 220));
-      router.refresh();
+      reveal(result.code);
     });
   }
 

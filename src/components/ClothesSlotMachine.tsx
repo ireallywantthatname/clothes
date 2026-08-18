@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import ClothesStrip from "./ClothesStrip";
 import SaveMatchButton from "./SaveMatchButton";
 import ConfirmDialog from "./ConfirmDialog";
-import {
-  toggleItemStatus,
-  deleteClothingItem,
-  updateNickname,
-} from "@/app/actions";
+import { usePasscode } from "@/lib/passcode";
 import type { ClothingItem } from "@/lib/types";
+import type { Id } from "../../convex/_generated/dataModel";
 
 type Props = {
   tops: ClothingItem[];
@@ -18,29 +16,34 @@ type Props = {
 };
 
 export default function ClothesSlotMachine({ tops, bottoms }: Props) {
-  const router = useRouter();
-  const [selectedTopId, setSelectedTopId] = useState<string | null>(null);
-  const [selectedBottomId, setSelectedBottomId] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<{
-    id: string;
-    imageUrl: string;
-  } | null>(null);
+  const { passcode } = usePasscode();
+  const toggleStatus = useMutation(api.clothes.toggleStatus);
+  const updateNickname = useMutation(api.clothes.updateNickname);
+  const removeItem = useMutation(api.clothes.remove);
+  const [selectedTopId, setSelectedTopId] = useState<Id<"clothes"> | null>(
+    null,
+  );
+  const [selectedBottomId, setSelectedBottomId] =
+    useState<Id<"clothes"> | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Id<"clothes"> | null>(
+    null,
+  );
 
-  const handleToggleStatus = async (id: string) => {
-    await toggleItemStatus(id);
-    router.refresh();
+  const handleToggleStatus = async (id: Id<"clothes">) => {
+    if (passcode === null) return;
+    await toggleStatus({ passcode, itemId: id });
   };
 
-  const handleDelete = (id: string, imageUrl: string) => {
-    setPendingDelete({ id, imageUrl });
+  const handleDelete = (id: Id<"clothes">) => {
+    setPendingDelete(id);
   };
 
   const handleNicknameChange = async (
-    id: string,
+    id: Id<"clothes">,
     nickname: string | null,
   ) => {
-    await updateNickname(id, nickname);
-    router.refresh();
+    if (passcode === null) return;
+    await updateNickname({ passcode, itemId: id, nickname });
   };
 
   return (
@@ -91,9 +94,8 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
         message="This cannot be undone. The photo and all its saved matches will be permanently deleted."
         confirmLabel="DELETE"
         onConfirm={async () => {
-          if (!pendingDelete) return;
-          await deleteClothingItem(pendingDelete.id, pendingDelete.imageUrl);
-          router.refresh();
+          if (!pendingDelete || passcode === null) return;
+          await removeItem({ passcode, itemId: pendingDelete });
           setPendingDelete(null);
         }}
         onCancel={() => setPendingDelete(null)}

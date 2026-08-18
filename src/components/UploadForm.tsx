@@ -3,7 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { uploadClothing } from "@/app/actions";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { usePasscode } from "@/lib/passcode";
+import type { Id } from "../../convex/_generated/dataModel";
 import {
   removeBackground,
   preloadBackgroundRemoval,
@@ -79,6 +82,9 @@ async function resizeImage(
 
 export default function UploadForm() {
   const router = useRouter();
+  const { passcode } = usePasscode();
+  const generateUploadUrl = useMutation(api.clothes.generateUploadUrl);
+  const createClothing = useMutation(api.clothes.create);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isSubmitting = useRef(false);
   const [file, setFile] = useState<File | null>(null);
@@ -172,17 +178,17 @@ export default function UploadForm() {
       return;
     }
 
+    if (passcode === null) {
+      setStatus({ type: "error", message: "Unlock the closet first." });
+      return;
+    }
+
     isSubmitting.current = true;
     setStatus({ type: "uploading" });
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("category", category);
+      let uploadFile = file;
       const trimmedNickname = nickname.trim();
-      if (trimmedNickname) {
-        formData.append("nickname", trimmedNickname);
-      }
 
       if (removeBg) {
         setStatus({ type: "processing" });
@@ -198,12 +204,11 @@ export default function UploadForm() {
           const bgBlob = await removeBackground(bgInput, {
             onProgress: progressCb,
           });
-          const pngFile = new File(
+          uploadFile = new File(
             [bgBlob],
             file.name.replace(/\.[^.]+$/, "") + ".png",
             { type: "image/png" },
           );
-          formData.set("file", pngFile);
         } catch (err) {
           setStatus({
             type: "error",
@@ -218,13 +223,34 @@ export default function UploadForm() {
         setStatus({ type: "uploading" });
       }
 
-      const result = await uploadClothing(formData);
+      const postUrl = await generateUploadUrl({ passcode });
+      const uploadResult = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": uploadFile.type },
+        body: uploadFile,
+      });
+      if (!uploadResult.ok) {
+        setStatus({
+          type: "error",
+          message: "Failed to upload file.",
+        });
+        return;
+      }
+      const { storageId } = (await uploadResult.json()) as {
+        storageId: Id<"_storage">;
+      };
+
+      const result = await createClothing({
+        passcode,
+        storageId,
+        category,
+        nickname: trimmedNickname || null,
+      });
 
       if ("error" in result) {
         setStatus({ type: "error", message: result.error });
       } else {
         setStatus({ type: "success", message: "Uploaded" });
-        router.refresh();
         setTimeout(() => {
           router.push("/");
         }, 800);

@@ -1,18 +1,17 @@
+import type { Id } from "../../convex/_generated/dataModel";
+
 export type ClothingItem = {
-  id: string;
-  image_url: string;
+  id: Id<"clothes">;
+  image_url: string | null;
   category: "top" | "bottom";
   status: "available" | "unavailable";
-  /** Personal name for the piece (e.g. "navy henley"). Null when unset. */
   nickname: string | null;
-  created_at: string;
 };
 
 export type Match = {
-  id: string;
-  top_id: string;
-  bottom_id: string;
-  created_at: string;
+  id: Id<"matches">;
+  top_id: Id<"clothes">;
+  bottom_id: Id<"clothes">;
   top?: ClothingItem;
   bottom?: ClothingItem;
 };

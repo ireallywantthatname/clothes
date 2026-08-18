@@ -1,60 +1,129 @@
-import { createHash, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
+"use client";
 
-/** HttpOnly cookie proving the wardrobe was unlocked this browser. */
-export const PASSCODE_COOKIE = "clothes-unlocked";
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { useConvex } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
-/** 30 days — long enough for a personal closet, short enough to re-lock. */
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const STORAGE_KEY = "clothes-unlocked";
+const MAX_AGE_MS = 60 * 60 * 24 * 30 * 1000;
 
-/**
- * Gate is active only when PASSCODE is set in the environment.
- * Empty / missing → open access (local dev without a code).
- */
-export function isPasscodeRequired(): boolean {
-  return Boolean(process.env.PASSCODE?.length);
-}
+type Stored = { code: string; exp: number };
 
-/** Opaque token derived from the passcode — never store the raw code in the cookie. */
-export function passcodeUnlockToken(): string | null {
-  const pass = process.env.PASSCODE;
-  if (!pass) return null;
-  return createHash("sha256")
-    .update(`clothes-gate:v1:${pass}`)
-    .digest("hex");
-}
+type PasscodeContextValue = {
+  passcode: string | null;
+  hydrating: boolean;
+  unlock: (
+    code: string,
+  ) => Promise<{ ok: true; code: string } | { ok: false; error: string }>;
+  reveal: (code: string) => void;
+};
 
-export function passcodesMatch(input: string, expected: string): boolean {
-  const a = Buffer.from(input);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length) {
-    // Keep work roughly constant when lengths differ
-    timingSafeEqual(b, b);
-    return false;
+const PasscodeContext = createContext<PasscodeContextValue | null>(null);
+
+function readStored(): string | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Stored;
+    if (!parsed?.code || typeof parsed.exp !== "number") return null;
+    if (Date.now() > parsed.exp) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return parsed.code;
+  } catch {
+    return null;
   }
-  return timingSafeEqual(a, b);
 }
 
-export async function isPasscodeUnlocked(): Promise<boolean> {
-  const expected = passcodeUnlockToken();
-  if (expected === null) return true;
-
-  const cookieStore = await cookies();
-  const value = cookieStore.get(PASSCODE_COOKIE)?.value;
-  if (!value) return false;
-  return passcodesMatch(value, expected);
+function writeStored(code: string): void {
+  try {
+    const payload: Stored = { code, exp: Date.now() + MAX_AGE_MS };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    return;
+  }
 }
 
-export async function setPasscodeUnlockedCookie(): Promise<void> {
-  const token = passcodeUnlockToken();
-  if (!token) return;
+function clearStored(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    return;
+  }
+}
 
-  const cookieStore = await cookies();
-  cookieStore.set(PASSCODE_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: COOKIE_MAX_AGE,
-  });
+export function PasscodeProvider({ children }: { children: ReactNode }) {
+  const convex = useConvex();
+  const [passcode, setPasscode] = useState<string | null>(null);
+  const [hydrating, setHydrating] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrate() {
+      const stored = readStored();
+      const candidate = stored ?? "";
+      try {
+        const result = await convex.query(api.passcode.verifyPasscode, {
+          passcode: candidate,
+        });
+        if (cancelled) return;
+        if (result.ok) {
+          setPasscode(candidate);
+        } else {
+          clearStored();
+          setPasscode(null);
+        }
+      } catch {
+        if (cancelled) return;
+        setPasscode(null);
+      } finally {
+        if (!cancelled) setHydrating(false);
+      }
+    }
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [convex]);
+
+  const value = useMemo<PasscodeContextValue>(
+    () => ({
+      passcode,
+      hydrating,
+      unlock: async (code: string) => {
+        const trimmed = code.trim();
+        const result = await convex.query(api.passcode.verifyPasscode, {
+          passcode: trimmed,
+        });
+        if (!result.ok) return result;
+        writeStored(trimmed);
+        return { ok: true as const, code: trimmed };
+      },
+      reveal: (code: string) => {
+        setPasscode(code);
+      },
+    }),
+    [convex, hydrating, passcode],
+  );
+
+  return createElement(PasscodeContext.Provider, { value }, children);
+}
+
+export function usePasscode(): PasscodeContextValue {
+  const ctx = useContext(PasscodeContext);
+  if (!ctx) {
+    throw new Error("usePasscode must be used within PasscodeProvider");
+  }
+  return ctx;
 }
