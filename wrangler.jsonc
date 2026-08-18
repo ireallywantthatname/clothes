@@ -21,5 +21,11 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "routes": [
+    {
+      "pattern": "clothes.akashdesilva.space",
+      "custom_domain": true
+    }
+  ]
 }
