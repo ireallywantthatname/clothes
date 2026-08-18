@@ -6,6 +6,7 @@ export type ClothingItem = {
   category: "top" | "bottom";
   status: "available" | "unavailable";
   nickname: string | null;
+  bgStatus: "pending" | "done" | "failed" | null;
 };
 
 export type Match = {

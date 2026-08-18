@@ -88,24 +88,24 @@ export const create = mutation({
     nickname: v.union(v.string(), v.null()),
   },
   returns: v.union(
-    v.object({ success: v.literal(true) }),
+    v.object({ success: v.literal(true), id: v.id("clothes") }),
     v.object({ error: v.string() }),
   ),
   handler: async (ctx, args) => {
     requirePasscode(args.passcode);
     try {
-      await ctx.db.insert("clothes", {
+      const id = await ctx.db.insert("clothes", {
         storageId: args.storageId,
         category: args.category,
         status: "available",
         nickname: normalizeNickname(args.nickname),
         bgStatus: "pending",
       });
+      return { success: true as const, id };
     } catch (e: unknown) {
       await ctx.storage.delete(args.storageId);
       return { error: `Failed to save: ${(e as Error).message}` };
     }
-    return { success: true as const };
   },
 });
 

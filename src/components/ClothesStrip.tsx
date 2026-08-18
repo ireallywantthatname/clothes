@@ -362,6 +362,7 @@ export default function ClothesStrip({
                   {item.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
+                      key={item.image_url}
                       src={item.image_url}
                       alt={
                         item.nickname
@@ -384,6 +385,12 @@ export default function ClothesStrip({
                       loading="lazy"
                     />
                   ) : null}
+
+                  {item.bgStatus === "pending" && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="stage-badge">CUT</span>
+                    </div>
+                  )}
 
                   {item.status === "unavailable" && (
                     <div className="absolute inset-0 flex items-center justify-center">
