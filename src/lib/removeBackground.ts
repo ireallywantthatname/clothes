@@ -52,20 +52,15 @@ type ImglyModule = {
   removeBackground: (image: Blob, config: ImglyConfig) => Promise<Blob>;
 };
 
-type TestHooks = {
-  loadImgly: () => Promise<ImglyModule>;
-  detectWebGPU: () => Promise<boolean>;
-};
-
-const defaultLoadImgly: TestHooks["loadImgly"] = async () => {
+async function loadImgly(): Promise<ImglyModule> {
   const m = await import("@imgly/background-removal");
   return {
     preload: m.preload as ImglyModule["preload"],
     removeBackground: m.removeBackground as ImglyModule["removeBackground"],
   };
-};
+}
 
-async function defaultDetectWebGPU(): Promise<boolean> {
+async function detectWebGPU(): Promise<boolean> {
   try {
     if (typeof navigator === "undefined") return false;
     const gpu = (
@@ -80,11 +75,6 @@ async function defaultDetectWebGPU(): Promise<boolean> {
     return false;
   }
 }
-
-let hooks: TestHooks = {
-  loadImgly: defaultLoadImgly,
-  detectWebGPU: defaultDetectWebGPU,
-};
 
 let preloadPromise: Promise<DeviceKind> | null = null;
 let preloadedDevice: DeviceKind | null = null;
@@ -117,11 +107,6 @@ function markAttemptFailedForRetry(): void {
   preloadedDevice = null;
 }
 
-/** Test helper: current memo-bust generation (for assertions). */
-export function __getMemoBustGeneration(): number {
-  return memoBustGeneration;
-}
-
 /** Absolute publicPath for imgly asset fetches (trailing slash required). */
 export function resolvePublicPath(): string {
   if (typeof window !== "undefined" && window.location?.origin) {
@@ -130,12 +115,8 @@ export function resolvePublicPath(): string {
   return BG_ASSET_PUBLIC_PATH;
 }
 
-/**
- * Prefer GPU when WebGPU is available; otherwise CPU/WASM.
- * Exported for tests and UI hints.
- */
-export async function resolveDevice(): Promise<DeviceKind> {
-  const hasGpu = await hooks.detectWebGPU();
+async function resolveDevice(): Promise<DeviceKind> {
+  const hasGpu = await detectWebGPU();
   return hasGpu ? "gpu" : "cpu";
 }
 
@@ -208,7 +189,7 @@ async function runPreload(
   device: DeviceKind,
   onProgress?: ProgressCallback,
 ): Promise<void> {
-  const imgly = await hooks.loadImgly();
+  const imgly = await loadImgly();
   await imgly.preload(baseConfig(device, onProgress));
 }
 
@@ -339,7 +320,6 @@ export function preloadBackgroundRemoval(
 export type RemoveBackgroundOptions = {
   onProgress?: ProgressCallback;
   timeoutMs?: number;
-  /** Force a device (skips auto-detect). Tests use this. */
   device?: DeviceKind;
   /** When false, do not retry on CPU after GPU failure (default true). */
   cpuFallback?: boolean;
@@ -384,7 +364,7 @@ export async function removeBackground(
     );
   }
 
-  const imgly = await hooks.loadImgly();
+  const imgly = await loadImgly();
 
   const run = (dev: DeviceKind) =>
     imgly.removeBackground(image, baseConfig(dev, onProgress));
@@ -432,39 +412,4 @@ export async function removeBackground(
       ),
     );
   }
-}
-
-/** Test-only: inject library / WebGPU boundaries. */
-export function __setBgRemovalTestHooks(
-  partial: Partial<TestHooks> | null,
-): void {
-  if (partial == null) {
-    hooks = {
-      loadImgly: defaultLoadImgly,
-      detectWebGPU: defaultDetectWebGPU,
-    };
-    return;
-  }
-  hooks = {
-    loadImgly: partial.loadImgly ?? hooks.loadImgly,
-    detectWebGPU: partial.detectWebGPU ?? hooks.detectWebGPU,
-  };
-}
-
-/** Test-only: reset module state between tests. */
-export function __resetBgRemovalState(): void {
-  preloadPromise = null;
-  preloadedDevice = null;
-  memoBustGeneration = 0;
-  status = {
-    phase: "idle",
-    progress: 0,
-    label: "",
-    device: null,
-    error: null,
-  };
-  hooks = {
-    loadImgly: defaultLoadImgly,
-    detectWebGPU: defaultDetectWebGPU,
-  };
 }
