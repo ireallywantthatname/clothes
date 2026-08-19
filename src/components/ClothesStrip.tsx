@@ -25,6 +25,7 @@ type Props = {
   onSelect: (id: Id<"clothes"> | null) => void;
   onToggleStatus: (id: Id<"clothes">) => void;
   onDelete: (id: Id<"clothes">) => void;
+  onRetryBg: (id: Id<"clothes">) => void;
   onNicknameChange: (
     id: Id<"clothes">,
     nickname: string | null,
@@ -47,6 +48,7 @@ export default function ClothesStrip({
   onSelect,
   onToggleStatus,
   onDelete,
+  onRetryBg,
   onNicknameChange,
   autoScrollDirection,
   autoScrollOffsetMs = 0,
@@ -395,8 +397,28 @@ export default function ClothesStrip({
                     </div>
                   )}
 
+                  {item.bgStatus === "failed" && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRetryBg(item.id);
+                        }}
+                        className="stage-badge pointer-events-auto cursor-pointer"
+                        aria-label={
+                          item.nickname
+                            ? `Retry cut for ${item.nickname}`
+                            : `Retry cut for ${category} item ${index + 1}`
+                        }
+                      >
+                        RETRY
+                      </button>
+                    </div>
+                  )}
+
                   {item.status === "unavailable" && (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <span className="stage-badge">WASH</span>
                     </div>
                   )}

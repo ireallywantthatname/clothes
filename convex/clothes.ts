@@ -259,3 +259,27 @@ export const failBgRemoval = mutation({
     return { success: true as const };
   },
 });
+
+export const retryBgRemoval = mutation({
+  args: {
+    passcode: v.string(),
+    itemId: v.id("clothes"),
+  },
+  returns: v.union(
+    v.object({ success: v.literal(true) }),
+    v.object({ error: v.string() }),
+  ),
+  handler: async (ctx, args) => {
+    requirePasscode(args.passcode);
+    const item = await ctx.db.get("clothes", args.itemId);
+    if (!item) return { error: "Item not found." };
+    if (item.bgStatus === "pending") {
+      return { success: true as const };
+    }
+    if (item.bgStatus !== "failed") {
+      return { error: "Nothing to retry." };
+    }
+    await ctx.db.patch("clothes", args.itemId, { bgStatus: "pending" });
+    return { success: true as const };
+  },
+});

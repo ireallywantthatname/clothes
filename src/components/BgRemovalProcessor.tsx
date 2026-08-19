@@ -15,6 +15,11 @@ import type { Id } from "../../convex/_generated/dataModel";
 const inFlight = new Set<string>();
 const finished = new Set<string>();
 
+export function releaseBgQueueItem(id: string) {
+  inFlight.delete(id);
+  finished.delete(id);
+}
+
 async function fileFromUrl(url: string): Promise<File> {
   const response = await fetch(url);
   if (!response.ok) {

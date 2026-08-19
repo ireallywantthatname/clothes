@@ -6,6 +6,7 @@ import { usePasscode } from "@/lib/passcode";
 import type { ClothingItem } from "@/lib/types";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { releaseBgQueueItem } from "./BgRemovalProcessor";
 import ClothesStrip from "./ClothesStrip";
 import ConfirmDialog from "./ConfirmDialog";
 import SaveMatchButton from "./SaveMatchButton";
@@ -20,6 +21,7 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
   const toggleStatus = useMutation(api.clothes.toggleStatus);
   const updateNickname = useMutation(api.clothes.updateNickname);
   const removeItem = useMutation(api.clothes.remove);
+  const retryBgRemoval = useMutation(api.clothes.retryBgRemoval);
   const [selectedTopId, setSelectedTopId] = useState<Id<"clothes"> | null>(
     null,
   );
@@ -36,6 +38,12 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
 
   const handleDelete = (id: Id<"clothes">) => {
     setPendingDelete(id);
+  };
+
+  const handleRetryBg = async (id: Id<"clothes">) => {
+    if (passcode === null) return;
+    releaseBgQueueItem(id);
+    await retryBgRemoval({ passcode, itemId: id });
   };
 
   const handleNicknameChange = async (
@@ -55,6 +63,7 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
         onSelect={setSelectedTopId}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
+        onRetryBg={handleRetryBg}
         onNicknameChange={handleNicknameChange}
         autoScrollDirection="forward"
         autoScrollOffsetMs={0}
@@ -77,6 +86,7 @@ export default function ClothesSlotMachine({ tops, bottoms }: Props) {
         onSelect={setSelectedBottomId}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDelete}
+        onRetryBg={handleRetryBg}
         onNicknameChange={handleNicknameChange}
         autoScrollDirection="backward"
         autoScrollOffsetMs={2100}
